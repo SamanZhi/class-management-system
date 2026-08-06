@@ -38,3 +38,9 @@ class AuthenticationTest(APITestCase):
         })
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_unauthenticated_request_rejected(self):
+        protected_url = '/api/users/.../'
+        response = self.client.get(protected_url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
