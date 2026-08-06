@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from users.models import User
@@ -17,3 +18,10 @@ class UserModelTest(TestCase):
         self.assertEqual(user.role, 'teacher')
         self.assertTrue(user.check_password('pass123'))
         self.assertTrue(user.is_active)
+
+    def test_invalid_role_rejected(self):
+        with self.assertRaises(ValidationError):
+            user = User(username='invalid_user',
+                        role='instructor'
+            )
+            user.full_clean()
