@@ -9,3 +9,7 @@ class CommandTest(TestCase):
         call_command('create_user', '--role=finance_officer')
 
         self.assertTrue(User.objects.filter(role='finance_officer').exists())
+
+    def test_create_user_invalid_role(self):
+        with self.assertRaises(SystemExit):
+            call_command('create_user', '--role=instructor')
