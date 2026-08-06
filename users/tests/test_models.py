@@ -40,3 +40,25 @@ class UserModelTest(TestCase):
                 password='pass456',
                 role='education_officer'
             )
+
+    def test_phone_numbers_validation(self):
+        user = User(
+            username='saman',
+            role='teacher',
+            phone_number='+989361208772',
+            emergency_number='+989123456789'
+                    )
+        user.full_clean()
+
+        with self.assertRaises(ValidationError) as context:
+            user2 = User(
+                username='abcd',
+                role='teacher',
+                phone_number='09361208772',
+                emergency_number='09123456789'
+            )
+            user2.full_clean()
+
+        errors = context.exception.message_dict
+        self.assertIn('phone_number', errors)
+        self.assertIn('emergency_number', errors)
