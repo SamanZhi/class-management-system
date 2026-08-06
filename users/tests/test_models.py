@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.db.utils import IntegrityError
 from django.test import TestCase
 
 from users.models import User
@@ -25,3 +26,17 @@ class UserModelTest(TestCase):
                         role='instructor'
             )
             user.full_clean()
+
+    def test_duplicate_username_rejected(self):
+        User.objects.create_user(
+            username='saman',
+            password='pass123',
+            role='teacher'
+        )
+
+        with self.assertRaises(IntegrityError):
+            User.objects.create_user(
+                username='saman',
+                password='pass456',
+                role='education_officer'
+            )
