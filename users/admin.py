@@ -6,5 +6,32 @@ from .models import User
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ('username', 'email', 'role', 'is_staff', 'is_active')
+    list_display = ('username', 'role', 'is_staff', 'is_active')
     list_filter = ('role', 'is_staff', 'is_active')
+
+@admin.register(User)
+class CustomUserAdmin(UserAdmin):
+    list_display = ('username', 'role', 'phone_number', 'emergency_number', 'is_active')
+    
+    list_filter = ('role', 'is_active')
+    
+    search_fields = ('username', 'phone_number', 'emergency_number')
+    
+    ordering = ('username',)
+    
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        ('Personal Info', {'fields': ('first_name', 'last_name')}),
+        ('Role & Contact', {'fields': ('role', 'phone_number', 'emergency_number')}),
+        ('Permissions', {
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+        }),
+        ('Important dates', {'fields': ('last_login', 'date_joined')}),
+    )
+    
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'password', 'role', 'phone_number', 'emergency_number'),
+        }),
+    )
