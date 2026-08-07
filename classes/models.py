@@ -1,10 +1,10 @@
 from django.db import models
 
-from core.models import BaseModel
+from core.models import BaseModel, SoftDeleteModel
 from terms.models import Term
 
 
-class Class(BaseModel):
+class Class(BaseModel, SoftDeleteModel):
     DURATION_CHOICES = (
         (60, '60 minutes'),
         (90, '90 minutes'),

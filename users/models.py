@@ -30,6 +30,14 @@ class User(AbstractUser):
             if errors:
                 raise ValidationError(errors)
 
+    def deactivate(self):
+        self.is_active = False
+        self.save()
+    
+    def activate(self):
+        self.is_active = True
+        self.save()
+
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
 
