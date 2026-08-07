@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand
 
 from users.models import User
@@ -9,9 +10,16 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('username', type=str, help='Username of the user')
         parser.add_argument('password', type=str, help='Password of the user')
-        parser.add_argument('role', type=str, choices=['teacher', 'education_officer', 'finance_officer'], help='Role of the user')
-        parser.add_argument('--phone', type=str, required=False, help='Phone number (required for teachers)')
-        parser.add_argument('--emergency', type=str, required=False, help='Emergency number (required for teachers)')
+        parser.add_argument(
+            'role',
+            type=str,
+            choices=['teacher', 'education_officer', 'finance_officer'],
+            help='Role of the user'
+        )
+        parser.add_argument('--phone', type=str, required=False,
+                            help='Phone number in format +98XXXXXXXXXX (required for teachers)')
+        parser.add_argument('--emergency', type=str, required=False,
+                            help='Emergency number in format +98XXXXXXXXXX (required for teachers)')
 
     def handle(self, *args, **options):
         username = options['username']
@@ -21,14 +29,30 @@ class Command(BaseCommand):
         emergency = options.get('emergency')
 
         if role == 'teacher' and (not phone or not emergency):
-            self.stdout.write(self.style.ERROR('Phone and emergency numbers are required for teachers.'))
+            self.stdout.write(
+                self.style.ERROR(
+                    'Phone and emergency numbers are required for teachers.'
+                )
+            )
             return
 
-        user = User.objects.create_user(
+        user = User(
             username=username,
-            password=password,
             role=role,
             phone_number=phone,
-            emergency_number=emergency
+            emergency_number=emergency,
         )
-        self.stdout.write(self.style.SUCCESS(f'User "{username}" with role "{role}" created successfully!'))
+        user.set_password(password)
+
+        try:
+            user.full_clean()
+        except ValidationError as e:
+            self.stdout.write(self.style.ERROR(f'Validation error: {e}'))
+            return
+
+        user.save()
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'User "{username}" with role "{role}" created successfully!'
+            )
+        )
