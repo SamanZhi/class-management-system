@@ -1,10 +1,10 @@
 from django.db import models
 
-from core.models import BaseModel
+from core.models import BaseModel, SoftDeleteModel
 from schools.models import School
 
 
-class Term(BaseModel):
+class Term(BaseModel, SoftDeleteModel):
     TYPE_CHOICES = (
         ('regular', 'Regular'),
         ('summer', 'Summer'),
