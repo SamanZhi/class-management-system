@@ -5,12 +5,7 @@ from .models import User
 
 
 @admin.register(User)
-class UserAdmin(BaseUserAdmin):
-    list_display = ('username', 'role', 'is_staff', 'is_active')
-    list_filter = ('role', 'is_staff', 'is_active')
-
-@admin.register(User)
-class CustomUserAdmin(UserAdmin):
+class CustomUserAdmin(BaseUserAdmin):
     list_display = ('username', 'role', 'phone_number', 'emergency_number', 'is_active')
     
     list_filter = ('role', 'is_active')

@@ -44,7 +44,11 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
 
     # Local apps
-    'users',
+   "core.apps.CoreConfig",
+   "users.apps.UsersConfig",
+   "schools.apps.SchoolsConfig",
+   "terms.apps.TermsConfig",
+   "classes.apps.ClassesConfig",
 ]   
 
 MIDDLEWARE = [
