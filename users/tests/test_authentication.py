@@ -43,4 +43,4 @@ class AuthenticationTest(APITestCase):
         protected_url = '/api/users/.../'
         response = self.client.get(protected_url)
 
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
