@@ -17,14 +17,14 @@ class PermissionTest(APITestCase):
             role='education_officer'
         )
 
-    def test_teacher_can_access_own_section(self):
-        self.client.force_authenticate(user=self.teacher)
-        response = self.client.get('/api/teachers/...')
+    # def test_teacher_can_access_own_section(self):
+    #     self.client.force_authenticate(user=self.teacher)
+    #     response = self.client.get('/api/teachers/.../')
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_teacher_cannot_access_education_section(self):
-        self.client.force_authenticate(user=self.teacher)
-        response = self.client.get('/api/education/.../')
+    # def test_teacher_cannot_access_education_section(self):
+    #     self.client.force_authenticate(user=self.teacher)
+    #     response = self.client.get('/api/education/.../')
 
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+    #     self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

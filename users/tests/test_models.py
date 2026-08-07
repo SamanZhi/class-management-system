@@ -44,6 +44,7 @@ class UserModelTest(TestCase):
     def test_phone_numbers_validation(self):
         user = User(
             username='saman',
+            password='pass123',
             role='teacher',
             phone_number='+989361208772',
             emergency_number='+989123456789'
@@ -53,6 +54,7 @@ class UserModelTest(TestCase):
         with self.assertRaises(ValidationError) as context:
             user2 = User(
                 username='abcd',
+                password='pass456',
                 role='teacher',
                 phone_number='09361208772',
                 emergency_number='09123456789'
