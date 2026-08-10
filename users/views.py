@@ -7,6 +7,8 @@ from rest_framework.views import APIView
 
 from users.serializers import UserProfileSerializer
 
+from .permissions import IsEducationOfficer, IsFinanceOfficer, IsTeacher
+
 
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
@@ -34,3 +36,22 @@ class ProfileView(RetrieveUpdateAPIView):
             instance.full_clean()
         except DjangoValidationError as e:
             raise DRFValidationError(e.message_dict)
+
+class TeacherDashboardView(APIView):
+    permission_classes = [IsTeacher]
+
+    def get(self, request):
+        return Response({"message": "مربی گرامی خوش آمدید"})
+
+class EducationOfficerDashboardView(APIView):
+    permission_classes = [IsEducationOfficer]
+
+    def get(self, request):
+        return Response({"message": "مسئول آموزش گرامی خوش آمدید"})
+
+class FinanceOfficerDashboardView(APIView):
+    permission_classes = [IsFinanceOfficer]
+
+    def get(self, request):
+        return Response({"message": "مسئول مالی گرامی خوش آمدید"})
+
