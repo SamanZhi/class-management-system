@@ -1,4 +1,4 @@
-from django.core import serializers
+from rest_framework import serializers
 
 from users.models import User
 
