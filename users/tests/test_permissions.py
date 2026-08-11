@@ -64,4 +64,22 @@ class PermissionTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_finance_officer_can_access_finance_dashboard(self):
+        self.client.force_authenticate(user=self.finance_officer)
+        response = self.client.get(self.finance_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_finance_officer_cannot_access_teacher_dashboard(self):
+        self.client.force_authenticate(user=self.finance_officer)
+        response = self.client.get(self.teacher_url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_finance_officer_cannot_access_education_dashboard(self):
+        self.client.force_authenticate(user=self.finance_officer)
+        response = self.client.get(self.education_url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     
