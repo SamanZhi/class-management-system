@@ -36,3 +36,12 @@ class ProfileUpdateTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('phone_number', response.data)
+
+    def test_user_can_update_allowed_field(self):
+        response = self.client.patch(self.url, {
+            'emergency_number': '+989999999999'
+        })
+
+        self.user.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.user.emergency_number, '+989999999999')
