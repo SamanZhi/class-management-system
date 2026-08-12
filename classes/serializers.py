@@ -4,10 +4,12 @@ from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Class, ClassTeacher
 from terms.models import Term
 from terms.serializers import TermSerializer
 from users.models import User
+
+from .models import Class, ClassTeacher
+
 
 class ClassSerializer(serializers.ModelSerializer):
     term = serializers.PrimaryKeyRelatedField(queryset=Term.objects.all())
@@ -49,3 +51,27 @@ class ClassTeacherSerializer(serializers.ModelSerializer):
                         'This period overlaps with an existing teacher assignment for this class.'
                     )
                 return data
+
+class CurrentTeacherSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'phone_number']
+
+class ClassDetailSerializer(serializers.ModelSerializer):
+    term = TermSerializer(read_only=True)
+    current_teacher = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Class
+        fields = ['id', 'term', 'subject', 'duration', 'current_teacher', 'created_at', 'updated_at']
+
+    def get_current_teacher(self, obj):
+        today = timezone.now().date()
+        assignment = obj.teacher_assignment.filter(
+            start_date__lte=today
+        ).filter(
+            Q(end_date__gte=today) | Q(end_date__isnull=True)
+        ).first()
+        if assignment:
+            return CurrentTeacherSerializer(assignment.teacher).data
+        return None
