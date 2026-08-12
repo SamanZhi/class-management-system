@@ -14,7 +14,7 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_obtain_refresh'),
     path('me/', MeView.as_view(), name='me'),
     path('profile/', ProfileView.as_view(), name='profile'),
-    path('dashboard/teacher/', TeacherDashboardView.as_view, name='teacher-dashboard'),
-    path('dashboard/education-officer/', EducationOfficerDashboardView.as_view, name='education-officer-dashboard'),
-    path('dashboard/finance-officer/', FinanceOfficerDashboardView.as_view, name='finance-officer-dashboard'),
+    path('dashboard/teacher/', TeacherDashboardView.as_view(), name='teacher-dashboard'),
+    path('dashboard/education-officer/', EducationOfficerDashboardView.as_view(), name='education-officer-dashboard'),
+    path('dashboard/finance-officer/', FinanceOfficerDashboardView.as_view(), name='finance-officer-dashboard'),
 ]
