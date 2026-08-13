@@ -10,7 +10,7 @@ class TermSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Term
-        field = ['id', 'school', 'start_date', 'end_date', 'type', 'is_deleted', 'created_at', 'updated_at']
+        fields = ['id', 'school', 'start_date', 'end_date', 'type', 'is_deleted', 'created_at', 'updated_at']
         read_only_fields = ['id', 'is_deleted', 'created_at', 'updated_at']
 
     def validate(self, data):
