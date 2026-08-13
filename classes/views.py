@@ -55,3 +55,17 @@ class ClassDetailView(APIView):
             class_obj = self.get_object(pk)
             class_obj.soft_delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+class ClassTeacherListCreateView(APIView):
+    permission_classes = [IsEducationOfficerOrReadOnly]
+
+    def get(self, request):
+        assignment = ClassTeacher.objects.all()
+        serializer = ClassTeacherSerializer(assignment, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = ClassTeacherSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
