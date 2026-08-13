@@ -69,3 +69,32 @@ class ClassTeacherListCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class ClassTeacherDetailView(APIView):
+    permission_classes = [IsEducationOfficerOrReadOnly]
+
+    def get_object(self, pk):
+        return get_object_or_404(ClassTeacher, pk=pk)
+
+    def get(self, request, pk):
+        assignment = self.get_object(pk)
+        return Response(ClassTeacherSerializer(assignment).data)
+
+    def put(self, request, pk):
+        assignment = self.get_object(pk)
+        serializer = ClassSerializer(assignment, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def patch(self, request, pk):
+        assignment = self.get_object(pk)
+        serializer = ClassTeacherSerializer(assignment, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        assignment = self.get_object(pk)
+        assignment.soft_delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
