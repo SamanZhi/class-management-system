@@ -47,7 +47,6 @@ class SchoolDetailView(APIView):
         serializer.save()
         return Response(serializer.data)
 
-
     def delete(self, request, pk):
         school = self.get_object(pk)
         school.soft_delete()
