@@ -2,7 +2,7 @@
 
 Django REST API for managing classes, session reports, and instructor payroll calculation.
 
-# Teacher and Payroll Management System — Phase 1
+# Teacher and Payroll Management System — Phase 2
 
 ---
 
@@ -28,7 +28,6 @@ Django REST API for managing classes, session reports, and instructor payroll ca
 اهداف اصلی پروژه عبارت‌اند از:
 
 * مدیریت کاربران با نقش‌های مختلف:
-
   * مربی (`teacher`)
   * کارشناس آموزش (`education_officer`)
   * کارشناس مالی (`finance_officer`)
@@ -36,67 +35,38 @@ Django REST API for managing classes, session reports, and instructor payroll ca
 * تأیید و رد گزارش‌های جلسات
 * محاسبه و پردازش حقوق مربیان
 
-> **وضعیت فعلی:** فاز ۱ — زیرساخت و احراز هویت
+> **وضعیت فعلی:** فاز ۲ — مدیریت مدارس، ترم‌ها، کلاس‌ها و تخصیص مربیان
 
 ---
 
 ## قابلیت‌های پیاده‌سازی‌شده
 
-### ✅ مدل کاربری سفارشی (Custom User Model)
+### ✅ فاز ۱: زیرساخت کاربری و احراز هویت
+* **مدل کاربری سفارشی (Custom User Model):** ارث‌بری از `AbstractUser` همراه با فیلدهای نقش (`role`)، شماره تماس (`phone_number`) و شماره اضطراری (`emergency_number`).
+* **احراز هویت JWT:** استفاده از `simplejwt` برای مدیریت نشست‌ها و توکن‌ها.
+* **کنترل دسترسی مبتنی بر نقش (RBAC):** پیاده‌سازی پرمیشن‌های اختصاصی مانند `IsTeacher`، `IsEducationOfficer` و `IsFinanceOfficer`.
 
-* ارث‌بری از `AbstractUser` جنگو
-* سه نقش اصلی:
+### ✅ فاز ۲: مدیریت مدارس، ترم‌ها و کلاس‌ها
+* **اپلیکیشن مدارس (`schools`):**
+  * ایجاد مدل `School` دارای فیلدهای `name` و `address`.
+  * مدیریت مدارس فعال با استفاده از منطق Soft Delete.
+* **اپلیکیشن ترم‌ها (`terms`):**
+  * ایجاد مدل `Term` دارای فیلدهای `name`، `start_date` و `end_date` برای مشخص کردن بازه‌های آموزشی.
+* **اپلیکیشن کلاس‌ها (`classes`):**
+  * ایجاد مدل `Class` (شامل فیلدهای ارتباط با مدرسه و ترم جاری).
+  * ایجاد مدل واسط `ClassTeacher` برای انتساب مربیان به کلاس‌ها همراه با نرخ پرداختی ساعتی (`hourly_rate`) و بازه زمانی فعالیت مربی (`start_date` و `end_date`).
+* **منطق جلوگیری از همپوشانی زمانی مربیان (Overlap Validation):**
+  * پیاده‌سازی متد `clean()` در سطح مدل و سریالایزر در `ClassTeacher` جهت جلوگیری از انتساب همزمان بیش از یک مربی به یک کلاس در بازه‌های زمانی متداخل (با در نظر گرفتن بازه‌های بدون تاریخ پایان یا `None`).
 
-  * `teacher`
-  * `education_officer`
-  * `finance_officer`
-* فیلدهای اضافی همراه با اعتبارسنجی:
-
-  * `phone_number`: شماره تماس با فرمت `+98xxxxxxxxxx`
-  * `emergency_number`: شماره اضطراری
-
-### 🔐 سیستم احراز هویت
-
-* احراز هویت مبتنی بر JWT با استفاده از `djangorestframework-simplejwt`
-* Endpoint ورود برای دریافت Access و Refresh Token
-* Endpoint اطلاعات کاربر جاری:
-
-  * `/api/auth/me/`
-* کنترل دسترسی مبتنی بر نقش (RBAC)
-
-### 👥 مدیریت کاربران
-
-* Management Command برای ایجاد کاربران جدید
-* پنل ادمین سفارشی‌سازی‌شده جنگو
-* اعتبارسنجی خودکار داده‌ها
-* هش کردن امن رمز عبور
-
-### 📚 مدل‌های پایه
-
-مدل‌های موردنیاز فازهای آینده در اپ‌های جداگانه ایجاد شده‌اند:
-
-* **schools**
-
-  * مدل `School`
-* **terms**
-
-  * مدل `Term`
-* **classes**
-
-  * مدل‌های `Class` و `ClassTeacher`
-
-### 🗑️ Soft Delete
-
-زیرساخت اولیه Soft Delete پیاده‌سازی شده است:
-
-* کلاس پایه `SoftDeleteModel` برای حذف منطقی
-* Manager سفارشی برای فیلتر خودکار
-* استفاده از `is_active` برای مدیریت وضعیت کاربران
+### 🗑️ زیرساخت Soft Delete
+پیاده‌سازی متد اختصاصی حذف نرم در مدل پایه `SoftDeleteModel` در اپ `core`:
+* فیلتر خودکار رکوردهای حذف‌نشده از طریق چرخه‌ی پیش‌فرض `objects` (با استفاده از `SoftDeleteManager`).
+* دسترسی به تمام رکوردهای حذف‌شده و حذف‌نشده با استفاده از `all_objects`.
+* پیاده‌سازی متد `soft_delete()` برای تغییر فیلد `is_deleted` به `True` و ثبت زمان حذف در `deleted_at` بدون حذف فیزیکی از دیتابیس.
 
 ---
 
 ## ساختار پروژه
-
 ```text
 project_root/
 │
@@ -105,395 +75,139 @@ project_root/
 │   ├── urls.py
 │   └── wsgi.py
 │
+├── core/                           # ابزارها و مدل‌های پایه مشترک
+│   ├── models.py                   # SoftDeleteModel و SoftDeleteManager
+│   └── views.py
+│
 ├── users/                          # مدیریت کاربران و احراز هویت
 │   ├── models.py                   # مدل User سفارشی
 │   ├── serializers.py              # UserSerializer
 │   ├── views.py                    # Login, Me endpoints
 │   ├── permissions.py              # IsTeacher, IsEducationOfficer, ...
 │   ├── admin.py                    # CustomUserAdmin
-│   │
-│   ├── management/
-│   │   └── commands/
-│   │       └── create_user.py
-│   │
 │   └── tests/
 │       ├── test_models.py
-│       ├── test_auth.py
+│       ├── test_authentication.py
 │       └── test_permissions.py
 │
-├── schools/                        # مدیریت مدارس
-│   └── models.py
+├── schools/                        # مدیریت مدارس (فاز ۲)
+│   ├── models.py                   # مدل School (ارث‌بری از SoftDeleteModel)
+│   ├── serializers.py              # SchoolSerializer
+│   ├── views.py                    # SchoolListView, SchoolDetailView
+│   ├── admin.py                    # مدیریت مدارس در پنل ادمین
+│   └── tests/                      # تست‌های اختصاصی مدارس
+│       ├── test_models.py
+│       ├── test_serializers.py
+│       └── test_views.py
 │
-├── terms/                          # مدیریت ترم‌ها
-│   └── models.py
+├── terms/                          # مدیریت ترم‌ها (فاز ۲)
+│   ├── models.py                   # مدل Term (ارث‌بری از SoftDeleteModel)
+│   ├── serializers.py              # TermSerializer
+│   ├── views.py                    # TermListView, TermDetailView
+│   └── admin.py
 │
-├── classes/                        # مدیریت کلاس‌ها
-│   └── models.py
-│
-├── core/                           # ابزارهای مشترک
-│   └── models.py                   # SoftDeleteModel
+├── classes/                        # مدیریت کلاس‌ها و مربیان (فاز ۲)
+│   ├── models.py                   # مدل‌های Class و ClassTeacher
+│   ├── serializers.py              # سریالایزرهای Class و ClassTeacher
+│   ├── views.py                    # ClassListView, ClassDetailView, ClassTeacherView
+│   ├── admin.py
+│   └── tests/                      # تست‌های جامع همپوشانی و عملکرد
+│       ├── test_models.py
+│       ├── test_serializers.py
+│       └── test_views.py
 │
 ├── manage.py
 ├── requirements.txt
 └── README.md
-```
 
 ---
 
 ## نصب و راه‌اندازی
 
 ### پیش‌نیازها
-
 * Python 3.10+
 * Django 4.2+
 * Django REST Framework 3.14+
 * djangorestframework-simplejwt 5.3+
 
-### مراحل نصب
-
-#### 1. کلون کردن مخزن
-
-```bash
-git clone <repository-url>
-cd <project-directory>
-```
-
-#### 2. ایجاد محیط مجازی
-
-**Linux / macOS:**
-
-```bash
-python -m venv venv
-source venv/bin/activate
-```
-
-**Windows:**
-
-```powershell
-python -m venv venv
-venv\Scripts\activate
-```
-
-#### 3. نصب وابستگی‌ها
-
-```bash
-pip install -r requirements.txt
-```
-
-#### 4. اجرای Migrationها
-
-```bash
-python manage.py makemigrations
-python manage.py migrate
-```
-
-#### 5. ایجاد Superuser — اختیاری
-
-```bash
-python manage.py createsuperuser
-```
-
-#### 6. ایجاد کاربران نمونه
-
-**مربی:**
-
-```bash
-python manage.py create_user \
-    --username teacher1 \
-    --password Test1234 \
-    --role teacher \
-    --phone +989123456789 \
-    --emergency +989121111111
-```
-
-**کارشناس آموزش:**
-
-```bash
-python manage.py create_user \
-    --username edu_officer \
-    --password Test1234 \
-    --role education_officer \
-    --phone +989123456788 \
-    --emergency +989122222222
-```
-
-**کارشناس مالی:**
-
-```bash
-python manage.py create_user \
-    --username finance_officer \
-    --password Test1234 \
-    --role finance_officer \
-    --phone +989123456787 \
-    --emergency +989123333333
-```
-
-> در Windows می‌توانید دستورها را در یک خط اجرا کنید یا از روش مناسب خط‌شکنی PowerShell استفاده کنید.
-
-#### 7. اجرای سرور
-
-```bash
-python manage.py runserver
-```
-
-سرور در آدرس زیر در دسترس خواهد بود:
-
-`http://127.0.0.1:8000/`
+### مراحل نصب و راه‌اندازی مشابه فازهای قبلی است:
+1. فعال‌سازی محیط مجازی و نصب وابستگی‌ها با `pip install -r requirements.txt`.
+2. اعمال مهاجرت‌ها با دستورهای `python manage.py makemigrations` و `python manage.py migrate`.
+3. راه‌اندازی سرور با `python manage.py runserver`.
 
 ---
 
-## راهنمای استفاده
+## راهنمای استفاده و API Endpoints (فاز ۲)
 
-### ورود به سیستم (Login)
+تمامی مسیرهای فاز ۲ نیاز به احراز هویت JWT با نقش مناسب (مثلاً کارشناس آموزش یا `education_officer`) دارند.
 
-#### درخواست
-
-```http
-POST /api/auth/login/
-Content-Type: application/json
-```
-
-```json
-{
-    "username": "teacher1",
-    "password": "Test1234"
-}
-```
-
-#### پاسخ موفق
-
-```json
-{
-    "access": "eyJ0eXAiOiJKV1QiLCJhbGc...",
-    "refresh": "eyJ0eXAiOiJKV1QiLCJhbGc..."
-}
-```
-
----
-
-### دریافت اطلاعات کاربر جاری
-
-#### درخواست
-
-```http
-GET /api/auth/me/
-Authorization: Bearer <access_token>
-```
-
-#### پاسخ
-
-```json
-{
-    "id": 3,
-    "username": "teacher1",
-    "role": "teacher",
-    "phone_number": "+989123456789"
-}
-```
-
----
-
-### تازه‌سازی Access Token
-
-#### درخواست
-
-```http
-POST /api/auth/token/refresh/
-Content-Type: application/json
-```
-
-```json
-{
-    "refresh": "<refresh_token>"
-}
-```
-
----
-
-## API Endpoints
-
-| Method | Endpoint                   | توضیحات                   | نیاز به احراز هویت |
-| ------ | -------------------------- | ------------------------- | ------------------ |
-| `POST` | `/api/auth/login/`         | ورود و دریافت JWT Token   | ❌                  |
-| `GET`  | `/api/auth/me/`            | دریافت اطلاعات کاربر جاری | ✅                  |
-| `POST` | `/api/auth/token/refresh/` | تازه‌سازی Access Token    | ✅ (Refresh Token)  |
+| متد | مسیر (Endpoint) | توضیحات |
+| :--- | :--- | :--- |
+| `GET` | `/api/schools/` | لیست تمامی مدارس فعال |
+| `POST` | `/api/schools/` | ثبت مدرسه جدید |
+| `GET` | `/api/schools/<id>/` | جزئیات یک مدرسه خاص |
+| `PUT` | `/api/schools/<id>/` | به‌روزرسانی کامل اطلاعات مدرسه |
+| `DELETE` | `/api/schools/<id>/` | حذف نرم (Soft Delete) مدرسه |
+| `GET` | `/api/terms/` | لیست ترم‌های ثبت‌شده |
+| `POST` | `/api/terms/` | ثبت ترم جدید |
+| `GET` | `/api/classes/` | لیست کلاس‌ها (با فیلترهای اختیاری `school` و `term`) |
+| `POST` | `/api/classes/` | ایجاد کلاس جدید |
+| `GET` | `/api/classes/<id>/` | جزئیات کلاس به همراه مشخصات مربی جاری (`current_teacher`) |
+| `POST` | `/api/classes/<id>/teachers/` | انتساب یک مربی جدید به کلاس با رعایت عدم همپوشانی زمانی |
 
 ---
 
 ## تست‌ها
 
-### اجرای تمام تست‌ها
+در فاز ۲، ساختار فایل‌های تست از حالت تک‌فایلی به ساختار ماژولار تفکیک شد و تست‌های واحد جامع در سطح مدل‌ها، سریالایزرها و ویوها پیاده‌سازی شدند.
 
-```bash
+### سناریوهای تستی پوشش داده‌شده:
+
+#### ۱. تست‌های مدارس (`schools/tests/`)
+* **تست‌های مدل:** بررسی صحت فیلدهای مدل `School` و اطمینان از عملکرد درست متد `soft_delete()` (تغییر وضعیت `is_deleted` به جای حذف فیزیکی).
+* **تست‌های سریالایزر:** بررسی اعتبار سنجی ورودی‌ها و ساختار خروجی داده‌ها.
+* **تست‌های API:** دسترسی‌سنجی متدهای `GET` ،`POST` و `DELETE` برای کاربران مهمان، مربیان و کارشناسان آموزش.
+
+#### ۲. تست‌های کلاس و همپوشانی مربیان (`classes/tests/`)
+* **تست اعتبارسنجی همپوشانی بازه‌های زمانی (Overlap Validation):**
+  * سناریوی همپوشانی کامل دو بازه زمانی.
+  * سناریوی ثبت بازه کاری جدید در شرایطی که بازه مربی قبلی فاقد تاریخ پایان (`end_date=None`) است.
+  * صحت ثبت مربیان در بازه‌های زمانی متوالی بدون همپوشانی.
+* **تست‌های API:** بررسی فیلتر کردن کلاس‌ها بر اساس ترم و مدرسه و دسترسی مربی جاری در خروجی سریالایزر کلاس.
+
+### نحوه اجرای تست‌ها
+برای اجرای کامل تست‌های سیستم:
+bash
 python manage.py test
-```
-
-### اجرای تست‌های یک اپ خاص
-
-```bash
-python manage.py test users
-```
-
-### اجرای یک فایل تست خاص
-
-```bash
-python manage.py test users.tests.test_models
-```
-
-### اجرای یک تست خاص
-
-```bash
-python manage.py test users.tests.test_models.UserModelTestCase.test_create_user_with_valid_role
-```
-
-### نمایش خروجی مفصل
-
-```bash
-python manage.py test --verbosity=2
-```
-
-### پوشش تست‌ها
-
-#### مدل User
-
-* ✅ ایجاد کاربران با نقش‌های مختلف
-* ✅ رد کردن نقش‌های نامعتبر
-* ✅ بررسی یکتایی نام کاربری
-* ✅ اعتبارسنجی فرمت شماره تلفن
-* ✅ هش کردن رمز عبور
-
-#### احراز هویت
-
-* ✅ ورود موفق با اطلاعات صحیح
-* ✅ رد کردن ورود با اطلاعات نادرست
-* ✅ دریافت JWT Token
-* ✅ محافظت Endpoint با JWT
-
-#### کنترل دسترسی
-
-* ✅ بررسی مجوزها بر اساس نقش
-* ✅ رد دسترسی برای نقش‌های غیرمجاز
 
 ---
 
-## محدودیت‌ها و نکات
+## محدودیت‌ها و نکات (فاز ۲)
 
-### ⚠️ محدودیت‌های شناخته‌شده
-
-#### 1. Soft Delete ناقص
-
-زیرساخت Soft Delete آماده است، اما منطق تجاری آن به‌صورت کامل پیاده‌سازی نشده است.
-
-* بررسی وابستگی‌ها هنوز پیاده‌سازی نشده
-* قابلیت بازیابی (Restore) هنوز پیاده‌سازی نشده
-
-#### 2. عدم وجود قابلیت فراموشی رمز عبور
-
-سیستم بازیابی رمز عبور در حال حاضر وجود ندارد.
-
-#### 3. عدم ثبت‌نام عمومی
-
-طبق الزامات پروژه، کاربران فقط از طریق پنل ادمین یا Management Command ایجاد می‌شوند.
-
-#### 4. مدل‌های پایه فاقد منطق تجاری
-
-مدل‌های `School`، `Term` و `Class` صرفاً برای آماده‌سازی فازهای بعدی ایجاد شده‌اند.
-
-#### 5. محدودیت Unique Together
-
-مدل `ClassTeacher` در حال حاضر به محدودیت `Unique Together` نیاز ندارد و این محدودیت در فازهای آینده اضافه خواهد شد.
-
----
-
-## ✨ نکات امنیتی
-
-* تمامی رمزهای عبور با الگوریتم `PBKDF2` هش می‌شوند.
-* JWT Tokenها دارای زمان انقضا هستند.
-* شماره تلفن‌ها قبل از ذخیره اعتبارسنجی می‌شوند.
-* نقش کاربر از `request.user` استخراج می‌شود، نه از بدنه درخواست.
-* کاربران بدون مجوز مناسب نمی‌توانند به Endpointهای محافظت‌شده دسترسی داشته باشند.
+### ⚠️ نکات پیاده‌سازی
+1. **عدم امکان حذف فیزیکی:** در اپلیکیشن‌های `schools` ،`terms` و `classes` امکان حذف دائمی (Hard Delete) از طریق وب‌سرویس وجود ندارد و حذف‌ها همگی به صورت سیستمی و از نوع Soft Delete هستند.
+2. **مدیریت مربیان جاری:** متد `get_current_teacher` در سریالایزر کلاس، تاریخ جاری سرور را ملاک مقایسه با فیلدهای `start_date` و `end_date` در مدل واسط قرار می‌دهد تا مربی فعال را شناسایی و بازگرداند.
+3. **عدم حذف مربیان:** بر اساس الزامات امنیتی و سیستمی، مدل کاربران (`User`) فاقد فیلد حذف نرم بوده و غیرقابل حذف تعریف شده است.
 
 ---
 
 ## تصمیمات فنی
 
-### چرا JWT؟
-
-#### مزایا
-
-* ✅ Stateless بودن → مقیاس‌پذیری بهتر
-* ✅ مناسب برای معماری API-first
-* ✅ قابل استفاده در اپلیکیشن‌های موبایل و SPA
-* ✅ کنترل دقیق زمان انقضا
-
-#### معایب
-
-* ❌ عدم امکان باطل کردن Token قبل از انقضا به‌صورت پیش‌فرض
-
-  * راه‌حل احتمالی: استفاده از Blacklist
-* ❌ حجم بیشتر نسبت به Session ID
-
----
-
-### چرا اپ‌های جداگانه؟
-
-دلایل اصلی جداسازی پروژه به اپ‌های مستقل:
-
-* **Separation of Concerns:** هر اپ مسئولیت مشخصی دارد.
-* **Reusability:** امکان استفاده مجدد از اپ‌ها در پروژه‌های دیگر.
-* **Maintainability:** توسعه و نگهداری آسان‌تر.
-* **Testability:** امکان تست مستقل هر بخش.
-
----
-
-### چرا Custom User Model از ابتدا؟
-
-تغییر مدل User در میانه پروژه می‌تواند بسیار پیچیده باشد. بنابراین، تعریف Custom User Model از ابتدای پروژه باعث می‌شود:
-
-* ✅ انعطاف‌پذیری کامل برای اضافه کردن فیلدهای جدید
-* ✅ جلوگیری از Migrationهای پیچیده در آینده
-* ✅ پیروی از Best Practiceهای Django
+### چرا تفکیک تست‌ها به ساختار دایرکتوری؟
+با افزایش پیچیدگی پروژه در فاز ۲ و اضافه شدن منطق‌های اعتبارسنجی همپوشانی، تقسیم تست‌ها به فایل‌های اختصاصی `test_models.py`، `test_serializers.py` و `test_views.py` باعث خوانایی بهتر، نگهداری آسان‌تر و تفکیک وظایف تست‌ها گردید.
 
 ---
 
 ## فازهای بعدی
 
-این پروژه در چهار فاز توسعه خواهد یافت.
-
-### Phase 1 — زیرساخت و احراز هویت
-
-* [x] Custom User Model
-* [x] JWT Authentication
-* [x] Role-Based Access Control
-* [x] User Management
-* [x] Basic Soft Delete Infrastructure
-
-### Phase 2 — مدیریت مدارس، ترم‌ها و کلاس‌ها
-
-* [ ] مدیریت مدارس
-* [ ] مدیریت ترم‌ها
-* [ ] ایجاد و مدیریت کلاس‌ها
-* [ ] اختصاص مربیان به کلاس‌ها
-
-### Phase 3 — مدیریت جلسات
-
-* [ ] ثبت جلسات
-* [ ] ثبت گزارش جلسات
-* [ ] تأیید و رد گزارش‌ها
-* [ ] مدیریت وضعیت جلسات
-
-### Phase 4 — محاسبه حقوق مربیان
-
-* [ ] محاسبه ساعات تدریس
-* [ ] محاسبه حقوق
-* [ ] تأیید پرداخت‌ها
-* [ ] گزارش‌های مالی
+* [x] **Phase 1** — زیرساخت و احراز هویت
+* [x] **Phase 2** — مدیریت مدارس، ترم‌ها، کلاس‌ها و تخصیص مربیان
+* [ ] **Phase 3** — ثبت جلسات و سیستم تایید/رد گزارش‌ها
+* [ ] **Phase 4** — محاسبه حقوق و پرداختی مربیان
 
 ---
 
 ## وضعیت پروژه
 
-**Current Version:** Phase 1
+**Current Version:** Phase 2
 **Status:** 🚧 In Development
-
----
