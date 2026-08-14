@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 
 from core.models import BaseModel, SoftDeleteModel
+from schools.models import School
 from terms.models import Term
 
 
@@ -13,6 +14,7 @@ class Class(BaseModel, SoftDeleteModel):
         (120, '120 minutes'),
     )
     
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='classes')
     term = models.ForeignKey(Term, on_delete=models.CASCADE, related_name='classes')
     subject = models.CharField(max_length=255)
     duration = models.IntegerField(choices=DURATION_CHOICES)
