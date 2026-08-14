@@ -6,7 +6,6 @@ from .models import Term
 
 
 class TermSerializer(serializers.ModelSerializer):
-    school = serializers.PrimaryKeyRelatedField(queryset=School.objects.all())
 
     class Meta:
         model = Term
