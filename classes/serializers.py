@@ -19,7 +19,7 @@ class ClassSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Class
-        fields = ['id', ' school', 'term', 'subject', 'duration', 'is_deleted', 'created_at', 'updated_at']
+        fields = ['id', 'school', 'term', 'subject', 'duration', 'is_deleted', 'created_at', 'updated_at']
         read_only_field = ['id', 'is_deleted', 'created_at', 'updated_at']
 
 class ClassTeacherSerializer(serializers.ModelSerializer):
