@@ -88,7 +88,7 @@ class ClassTeacherDetailView(APIView):
 
     def put(self, request, pk):
         assignment = self.get_object(pk)
-        serializer = ClassSerializer(assignment, data=request.data)
+        serializer = ClassTeacherSerializer(assignment, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
