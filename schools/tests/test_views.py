@@ -21,3 +21,12 @@ class SchoolViewTestCase(APITestCase):
         self.school = School.objects.create(Name='School A')
         self.list_url = reverse('schools:school-list-create')
         self.detail_url = reverse('schools:school-detail', args=[self.school.id])
+
+    def test_list_requires_authentication(self):
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_list_allowed_for_any_authenticated_role(self):
+        self.client.force_authenticate(self.teacher)
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
