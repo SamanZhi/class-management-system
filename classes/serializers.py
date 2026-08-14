@@ -20,7 +20,7 @@ class ClassSerializer(serializers.ModelSerializer):
     class Meta:
         model = Class
         fields = ['id', 'school', 'term', 'subject', 'duration', 'is_deleted', 'created_at', 'updated_at']
-        read_only_field = ['id', 'is_deleted', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'is_deleted', 'created_at', 'updated_at']
 
 class ClassTeacherSerializer(serializers.ModelSerializer):
     teacher = serializers.PrimaryKeyRelatedField(
@@ -71,7 +71,7 @@ class ClassDetailSerializer(serializers.ModelSerializer):
 
     def get_current_teacher(self, obj):
         today = timezone.now().date()
-        assignment = obj.teacher_assignment.filter(
+        assignment = obj.teacher_assignments.filter(
             start_date__lte=today
         ).filter(
             Q(end_date__gte=today) | Q(end_date__isnull=True)
