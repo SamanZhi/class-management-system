@@ -18,6 +18,12 @@ class ClassListCreateView(APIView):
 
     def get(self, request):
         classes = Class.objects.all()
+        school_id = request.query_params.get('school')
+        term_id = request.query_params.get('term')
+        if school_id:
+            classes = classes.filter(school_id=school_id)
+        if term_id:
+            classes = classes.filter(term_id=term_id)
         serializer = ClassSerializer(classes, many=True)
         return Response(serializer.data)
 
