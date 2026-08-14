@@ -45,3 +45,18 @@ class SchoolViewTestCase(APITestCase):
         self.client.force_authenticate(self.finance_officer)
         response = self.client.post(self.list_url, {'name': 'New School'})
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_retrieve_allowed_for_teacher(self):
+        self.client.force_authenticate(self.teacher)
+        response = self.client.get(self.detail_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_retrieve_allowed_for_education_officer(self):
+        self.client.force_authenticate(self.education_officer)
+        response = self.client.get(self.detail_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_retrieve_allowed_for_finance_officer(self):
+        self.client.force_authenticate(self.finance_officer)
+        response = self.client.get(self.detail_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
