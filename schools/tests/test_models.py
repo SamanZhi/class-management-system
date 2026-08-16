@@ -29,7 +29,7 @@ class SchoolModelTest(TestCase):
         school = School.objects.create(name='School D')
         school.soft_delete()
 
-        self.assertNotIn(school, school.objects,all())
+        self.assertNotIn(school, school.objects.all())
         self.assertEqual(School.objects.filter(pk=school.pk).count(), 0)
 
     def test_soft_deleted_visible_in_all_objects_manager(self):
