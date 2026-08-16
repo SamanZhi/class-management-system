@@ -1,6 +1,6 @@
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from django.urls import reverse
 
 from schools.models import School
 from users.models import User
@@ -18,7 +18,7 @@ class SchoolViewTestCase(APITestCase):
         self.finance_officer = User.objects.create_user(
                             username='fin_officer A', password='pass789', role='finance_officer',
         )
-        self.school = School.objects.create(Name='School A')
+        self.school = School.objects.create(name='School A')
         self.list_url = reverse('schools:school-list-create')
         self.detail_url = reverse('schools:school-detail', args=[self.school.id])
 
