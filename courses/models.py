@@ -7,29 +7,25 @@ from schools.models import School
 from terms.models import Term
 
 
-class Class(BaseModel, SoftDeleteModel):
+class Course(BaseModel, SoftDeleteModel):
     DURATION_CHOICES = (
         (60, '60 minutes'),
         (90, '90 minutes'),
         (120, '120 minutes'),
     )
     
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='classes')
-    term = models.ForeignKey(Term, on_delete=models.CASCADE, related_name='classes')
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='courses')
+    term = models.ForeignKey(Term, on_delete=models.CASCADE, related_name='courses')
     subject = models.CharField(max_length=255)
     duration = models.IntegerField(choices=DURATION_CHOICES)
 
     def __str__(self):
         return f"{self.subject} ({self.duration}min) - {self.term}"
 
-    class Meta:
-        db_table = 'class'
-        verbose_name_plural = 'Classes'
 
-
-class ClassTeacher(BaseModel, SoftDeleteModel):
-    class_obj = models.ForeignKey('Class', on_delete=models.CASCADE, related_name='teacher_assignments')
-    teacher = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='class_assignments')
+class CourseTeacher(BaseModel, SoftDeleteModel):
+    course_obj = models.ForeignKey('Course', on_delete=models.CASCADE, related_name='teacher_assignments')
+    teacher = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='course_assignments')
     start_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
 
@@ -37,8 +33,8 @@ class ClassTeacher(BaseModel, SoftDeleteModel):
         if self.end_date and self.end_date <= self.start_date:
             raise ValidationError("End_date باید بعد از start_date باشد.")
 
-        overlapping = ClassTeacher.objects.filter(
-            class_obj=self.class_obj
+        overlapping = CourseTeacher.objects.filter(
+            course_obj=self.course_obj
         ).exclude(pk=self.pk)
 
         for assignment in overlapping:
@@ -48,4 +44,4 @@ class ClassTeacher(BaseModel, SoftDeleteModel):
                 raise ValidationError("این بازه زمانی با مربی دیگری هم پوشانی دارد.")
 
     def __str__(self):
-        return f"{self.teacher} -> {self.class_obj} ({self.start_date} to {self.end_date or 'present'})"
+        return f"{self.teacher} -> {self.course_obj} ({self.start_date} to {self.end_date or 'present'})"

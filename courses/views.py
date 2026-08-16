@@ -5,97 +5,97 @@ from rest_framework.views import APIView
 
 from users.permissions import IsEducationOfficerOrReadOnly
 
-from .models import Class, ClassTeacher
+from .models import Course, CourseTeacher
 from .serializers import (
-    ClassDetailSerializer,
-    ClassSerializer,
-    ClassTeacherSerializer,
+    CourseDetailSerializer,
+    CourseSerializer,
+    CourseTeacherSerializer,
 )
 
 
-class ClassListCreateView(APIView):
+class CourseListCreateView(APIView):
     permission_classes = [IsEducationOfficerOrReadOnly]
 
     def get(self, request):
-        classes = Class.objects.all()
+        courses = Course.objects.all()
         school_id = request.query_params.get('school')
         term_id = request.query_params.get('term')
         if school_id:
-            classes = classes.filter(school_id=school_id)
+            courses = courses.filter(school_id=school_id)
         if term_id:
-            classes = classes.filter(term_id=term_id)
-        serializer = ClassSerializer(classes, many=True)
+            courses = courses.filter(term_id=term_id)
+        serializer = CourseSerializer(courses, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = ClassSerializer(data=request.data)
+        serializer = CourseSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-class ClassDetailView(APIView):
+class CourseDetailView(APIView):
     permission_classes = [IsEducationOfficerOrReadOnly]
 
     def get_object(self, pk):
-        return get_object_or_404(Class, pk=pk)
+        return get_object_or_404(Course, pk=pk)
 
     def get(self, request, pk):
-        class_obj = self.get_object(pk)
-        return Response(ClassDetailSerializer(class_obj).data)
+        course_obj = self.get_object(pk)
+        return Response(CourseDetailSerializer(course_obj).data)
 
     def put(self, request, pk):
-        class_obj = self.get_object(pk)
-        serializer = ClassSerializer(class_obj, data=request.data)
+        course_obj = self.get_object(pk)
+        serializer = CourseSerializer(course_obj, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
 
     def patch(self, request, pk):
-        class_obj = self.get_object(pk)
-        serializer = ClassSerializer(class_obj, data=request.data, partial=True)
+        course_obj = self.get_object(pk)
+        serializer = CourseSerializer(course_obj, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
 
     def delete(self, request, pk):
-            class_obj = self.get_object(pk)
-            class_obj.soft_delete()
+            course_obj = self.get_object(pk)
+            course_obj.soft_delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-class ClassTeacherListCreateView(APIView):
+class CourseTeacherListCreateView(APIView):
     permission_classes = [IsEducationOfficerOrReadOnly]
 
     def get(self, request):
-        assignment = ClassTeacher.objects.all()
-        serializer = ClassTeacherSerializer(assignment, many=True)
+        assignment = CourseTeacher.objects.all()
+        serializer = CourseTeacherSerializer(assignment, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = ClassTeacherSerializer(data=request.data)
+        serializer = CourseTeacherSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-class ClassTeacherDetailView(APIView):
+class CourseTeacherDetailView(APIView):
     permission_classes = [IsEducationOfficerOrReadOnly]
 
     def get_object(self, pk):
-        return get_object_or_404(ClassTeacher, pk=pk)
+        return get_object_or_404(CourseTeacher, pk=pk)
 
     def get(self, request, pk):
         assignment = self.get_object(pk)
-        return Response(ClassTeacherSerializer(assignment).data)
+        return Response(CourseTeacherSerializer(assignment).data)
 
     def put(self, request, pk):
         assignment = self.get_object(pk)
-        serializer = ClassTeacherSerializer(assignment, data=request.data)
+        serializer = CourseTeacherSerializer(assignment, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
 
     def patch(self, request, pk):
         assignment = self.get_object(pk)
-        serializer = ClassTeacherSerializer(assignment, data=request.data, partial=True)
+        serializer = CourseTeacherSerializer(assignment, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)

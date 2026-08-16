@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'schools.apps.SchoolsConfig',
     'terms.apps.TermsConfig',
-    'classes.apps.ClassesConfig',
+    'courses.apps.CoursesConfig',
 ]   
 
 MIDDLEWARE = [
@@ -101,7 +101,7 @@ SIMPLE_JWT = {
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Class Management System API',
-    'DESCRIPTION': 'API for managing teachers, classes, and payroll',
+    'DESCRIPTION': 'API for managing teachers, courses, and payrolls',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'SECURITY': [{'jwtAuth': []}],
