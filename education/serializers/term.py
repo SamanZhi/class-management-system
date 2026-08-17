@@ -11,11 +11,23 @@ class TermSerializer(serializers.ModelSerializer):
         fields = ['id', 'start_date', 'end_date', 'type', 'is_deleted', 'created_at', 'updated_at']
         read_only_fields = ['id', 'is_deleted', 'created_at', 'updated_at']
 
-    def validate(self, data):
-        start = data.get('start_date', getattr(self.instance, 'start_date', None))
-        end = data.get('end_date', getattr(self.instance, 'end_date', None))
-        if start and end and end <= start:
-            raise serializers.ValidationError(
-                {'end_date': 'End date must be after start date.'}
+    def validate(self, attrs):
+        start_date = attrs.get("start_date", getattr(self.instance, "start_date", None))
+        end_date = attrs.get("end_date", getattr(self.instance, "end_date", None))
+
+        if start_date and end_date:
+            if end_date <= start_date:
+                raise serializers.ValidationError({"end_date": "تاریخ پایان ترم باید بعد از تاریخ شروع باشد."})
+
+            overlapping_terms = Term.objects.filter(
+                start_date__lte=self.end_date,
+                end_date__gte=self.start_date
             )
-        return data
+
+            if self.instance:
+                overlapping_terms = overlapping_terms.exclude(pk=self.instance.pk)
+
+            if overlapping_terms.exists():
+                raise serializers.ValidationError({"start_date": "بازه زمانی این ترم با یک ترم دیگر همپوشانی دارد."})
+
+        return attrs
