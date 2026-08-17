@@ -3,10 +3,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from education.models import School
+from education.serializers.school import SchoolSerializer
 from users.permissions import IsEducationOfficerOrReadOnly
-
-from .models import School
-from .serializers import SchoolSerializer
 
 
 class SchoolListCreateView(APIView):
@@ -22,6 +21,7 @@ class SchoolListCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 class SchoolDetailView(APIView):
     permission_classes= [IsEducationOfficerOrReadOnly]

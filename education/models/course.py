@@ -3,8 +3,9 @@ from django.db import models
 from django.utils import timezone
 
 from core.models import BaseModel, SoftDeleteModel
-from schools.models import School
-from terms.models import Term
+
+from .school import School
+from .term import Term
 
 
 class Course(BaseModel, SoftDeleteModel):

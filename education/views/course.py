@@ -3,14 +3,13 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from users.permissions import IsEducationOfficerOrReadOnly
-
-from .models import Course, CourseTeacher
-from .serializers import (
+from education.models import Course, CourseTeacher
+from education.serializers.course import (
     CourseDetailSerializer,
     CourseSerializer,
     CourseTeacherSerializer,
 )
+from users.permissions import IsEducationOfficerOrReadOnly
 
 
 class CourseListCreateView(APIView):
@@ -32,6 +31,7 @@ class CourseListCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 class CourseDetailView(APIView):
     permission_classes = [IsEducationOfficerOrReadOnly]
@@ -62,6 +62,7 @@ class CourseDetailView(APIView):
             course_obj.soft_delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class CourseTeacherListCreateView(APIView):
     permission_classes = [IsEducationOfficerOrReadOnly]
 
@@ -75,6 +76,7 @@ class CourseTeacherListCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 class CourseTeacherDetailView(APIView):
     permission_classes = [IsEducationOfficerOrReadOnly]

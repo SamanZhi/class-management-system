@@ -3,10 +3,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from education.models import Term
+from education.serializers.term import TermSerializer
 from users.permissions import IsEducationOfficerOrReadOnly
-
-from .models import Term
-from .serializers import TermSerializer
 
 
 class TermListCreateView(APIView):
@@ -22,6 +21,7 @@ class TermListCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 class TermDetailView(APIView):
     permission_classes = [IsEducationOfficerOrReadOnly]

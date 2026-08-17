@@ -3,14 +3,11 @@ from datetime import date
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
+from serializers.school import SchoolSerializer
+from serializers.term import TermSerializer
 
-from schools.models import School
-from schools.serializers import SchoolSerializer
-from terms.models import Term
-from terms.serializers import TermSerializer
+from education.models import Course, CourseTeacher, School, Term
 from users.models import User
-
-from .models import Course, CourseTeacher
 
 
 class CourseSerializer(serializers.ModelSerializer):

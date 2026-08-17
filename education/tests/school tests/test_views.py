@@ -2,7 +2,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from schools.models import School
+from education.models import School
 from users.models import User
 
 
