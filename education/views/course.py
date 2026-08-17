@@ -24,7 +24,12 @@ class CourseListCreateView(APIView):
         if term_id:
             courses = courses.filter(term_id=term_id)
         serializer = CourseSerializer(courses, many=True)
+        if request.user.role == 'teacher':
+            courses = courses.filter(
+                teacher_assignments__teacher=request.user
+            ).distinct()
         return Response(serializer.data)
+
 
     def post(self, request):
         serializer = CourseSerializer(data=request.data)
@@ -36,8 +41,14 @@ class CourseListCreateView(APIView):
 class CourseDetailView(APIView):
     permission_classes = [IsEducationOfficerOrReadOnly]
 
-    def get_object(self, pk):
-        return get_object_or_404(Course, pk=pk)
+    def get_object(self, request, pk):
+        queryset = Course.objects.all()
+
+        if request.user.role == 'teacher':
+            queryset = queryset.filter(
+                teacher_assignments__teacher=request.user
+            ).distinct()
+        return get_object_or_404(queryset, pk=pk)
 
     def get(self, request, pk):
         course_obj = self.get_object(pk)
