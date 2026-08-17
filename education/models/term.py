@@ -16,7 +16,18 @@ class Term(BaseModel, SoftDeleteModel):
 
     def clean(self):
         if self.end_date <= self.start_date:
-            raise ValidationError("End_date باید بعد از start_date باشد.")
+            raise ValidationError({"end_date": "تاریخ پایان ترم باید بعد از تاریخ شروع باشد."})
+
+        overlapping_terms = Term.objects.filter(
+            start_date__lte=self.end_date,
+            end_date__gte=self.start_date
+        )
+
+        if self.pk:
+            overlapping_terms = overlapping_terms.exclude(pk=self.pk)
+
+        if overlapping_terms.exists():
+            raise ValidationError({"start_date": "بازه زمانی این ترم با یک ترم دیگر همپوشانی دارد."})
 
     def __str__(self):
         return f"{self.type} - ({self.start_date} to {self.end_date})"
