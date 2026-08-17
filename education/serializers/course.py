@@ -30,28 +30,40 @@ class CourseTeacherSerializer(serializers.ModelSerializer):
         fields = ['id', 'course_obj', 'teacher', 'start_date', 'end_date', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
-    def validate(self, data):
-        course_obj = data.get('course_obj', getattr(self.instance, 'course_obj', None))
-        start_date = data.get('start_date', getattr(self.instance, 'start_date', None))
-        end_date = data.get('end_date', getattr(self.instance, 'end_date', None))
+    def validate(self, attrs):
+        course_obj = attrs.get("course_obj", getattr(self.instance, "course_obj", None))
+        start_date = attrs.get('start_date', getattr(self.instance, 'start_date', None))
+        end_date = attrs.get('end_date', getattr(self.instance, 'end_date', None))
 
         if start_date and end_date and end_date < start_date:
             raise serializers.ValidationError(
                 {'end_date': 'End date must be after start date.'}
             )
 
+        term = course_obj.term
+
+        if start_date < term.start_date:
+            raise serializers.ValidationError({"start_date": "تاریخ شروع ارتباط مربی باید داخل بازه ترم باشد."})
+
+        if start_date > term.end_date:
+            raise serializers.ValidationError({"start_date": "تاریخ شروع ارتباط مربی باید داخل بازه ترم باشد."})
+
+        if end_date and end_date > term.end_date:
+            raise serializers.ValidationError({"end_date": "تاریخ پایان ارتباط مربی باید داخل بازه ترم باشد."})
+
         qs = CourseTeacher.objects.filter(course_obj=course_obj)
         if self.instance:
             qs = qs.exclude(pk=self.instance.pk)
 
         new_end = end_date or date.max
+
         for assignment in qs:
             existing_end = assignment.end_date or date.max
             if start_date <= existing_end and assignment.start_date <= new_end:
                 raise serializers.ValidationError(
                     'This period overlaps with an existing teacher assignment for this course.'
                 )
-        return data
+        return attrs
 
 class CurrentTeacherSerializer(serializers.ModelSerializer):
     class Meta:
