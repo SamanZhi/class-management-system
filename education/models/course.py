@@ -44,5 +44,14 @@ class CourseTeacher(BaseModel, SoftDeleteModel):
             if self.start_date <= other_end and assignment.start_date <= this_end:
                 raise ValidationError("این بازه زمانی با مربی دیگری هم پوشانی دارد.")
 
+        term = self.course_obj.term
+
+        if self.start_date < term.start_date or self.start_date > term.end_date:
+            raise ValidationError({"start_date": "تاریخ شروع ارتباط مربی باید داخل بازه ترم باشد."})
+
+        if self.end_date and self.end_date > term.end_date:
+            raise ValidationError({"end_date": "تاریخ پایان ارتباط مربی باید داخل بازه ترم باشد."})
+
+
     def __str__(self):
         return f"{self.teacher} -> {self.course_obj} ({self.start_date} to {self.end_date or 'present'})"
