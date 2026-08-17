@@ -1,8 +1,7 @@
+
 from rest_framework import serializers
 
-from schools.models import School
-
-from .models import Term
+from education.models import Term
 
 
 class TermSerializer(serializers.ModelSerializer):
