@@ -3,11 +3,12 @@ from datetime import date
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import serializers
-from serializers.school import SchoolSerializer
-from serializers.term import TermSerializer
 
 from education.models import Course, CourseTeacher, School, Term
 from users.models import User
+
+from .school import SchoolSerializer
+from .term import TermSerializer
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -39,7 +40,7 @@ class CourseTeacherSerializer(serializers.ModelSerializer):
                 {'end_date': 'End date must be after start date.'}
             )
 
-        qs = CourseTeacher.objects.filter(class_obj=course_obj)
+        qs = CourseTeacher.objects.filter(course_obj=course_obj)
         if self.instance:
             qs = qs.exclude(pk=self.instance.pk)
 
