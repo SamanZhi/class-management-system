@@ -37,4 +37,31 @@ class TermViewTest(APITestCase):
         ), 
 
         self.list_url = reverse('term_list')
-        self.detail_url= reverse('term_detail', args=[self.term.id])
+        self.detail_url= reverse('term_detail', args=[self.term.id]
+        )
+
+    def test_list_requires_authentication(self):
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_list_allowed_for_teacher(self):
+        self.client.force_authenticate(self.teacher)
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_allowed_for_education_officer(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_list_allowed_for_finance_officer(self):
+        self.client.force_authenticate(self.finance_officer)
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
