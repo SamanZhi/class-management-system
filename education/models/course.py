@@ -34,16 +34,6 @@ class CourseTeacher(BaseModel, SoftDeleteModel):
         if self.end_date and self.end_date <= self.start_date:
             raise ValidationError("End_date باید بعد از start_date باشد.")
 
-        overlapping = CourseTeacher.objects.filter(
-            course_obj=self.course_obj
-        ).exclude(pk=self.pk)
-
-        for assignment in overlapping:
-            other_end = assignment.end_date or timezone.max.date()
-            this_end = self.end_date or timezone.max.date()
-            if self.start_date <= other_end and assignment.start_date <= this_end:
-                raise ValidationError("این بازه زمانی با مربی دیگری هم پوشانی دارد.")
-
         term = self.course_obj.term
 
         if self.start_date < term.start_date or self.start_date > term.end_date:
@@ -51,7 +41,18 @@ class CourseTeacher(BaseModel, SoftDeleteModel):
 
         if self.end_date and self.end_date > term.end_date:
             raise ValidationError({"end_date": "تاریخ پایان ارتباط مربی باید داخل بازه ترم باشد."})
+        
+        overlapping = CourseTeacher.objects.filter(
+            course_obj=self.course_obj
+        ).exclude(pk=self.pk)
 
+        this_end = self.end_date or timezone.max.date()
+
+        for assignment in overlapping:
+            other_end = assignment.end_date or timezone.max.date()
+
+            if self.start_date <= other_end and assignment.start_date <= this_end:
+                raise ValidationError("این بازه زمانی با مربی دیگری هم پوشانی دارد.")
 
     def __str__(self):
         return f"{self.teacher} -> {self.course_obj} ({self.start_date} to {self.end_date or 'present'})"
