@@ -72,14 +72,14 @@ class TermModelTest(TestCase):
         self.assertIsNotNone(term.deleted_at)
         self.assertGreaterEqual(term.deleted_at, before)
 
-    def test_soft_deleted_terms_are_excluded_from_default_manager(self):
+    def test_soft_deleted_term_is_excluded_from_default_manager(self):
         term = self.create_term()
 
         term.soft_delete()
 
         self.assertFalse(Term.objects.filter(pk=term.pk).exists())
 
-    def test_soft_deleted_are_visible_in_all_objects_manager(self):
+    def test_soft_deleted_term_is_visible_in_all_objects_manager(self):
         term = self.create_term()
 
         term.soft_delete()
