@@ -32,3 +32,14 @@ class CourseModelTests(TestCase):
             phone_number='=+989123456789',
             emergency_number='+989876543210'
         )
+
+    def test_create_course(self):
+        self.assertEqual(self.course.school, self.school)
+        self.assertEqual(self.course.term, self.term)
+        self.assertEqual(self.course.subject, 'Python')
+        self.assertEqual(self.course.duration, 90)
+        self.assertFalse(self.course.is_deleted)
+        self.assertIsNone(self.course.deleted_at)
+
+    def test_str_returns_expected_value(self):
+        self.assertEqual(str(self.course), 'Python (90min) - regular - (2026-09-01 to 2026-11-31)')
