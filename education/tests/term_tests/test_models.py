@@ -1,9 +1,11 @@
 from datetime import date
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils import timezone
 
 from education.models import Term
+
 
 class TermModelTest(TestCase):
     def create_term(self, start_date=date(2026, 9, 1), end_date=date(2026, 11, 31), term_type='regular'):
