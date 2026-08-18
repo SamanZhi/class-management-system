@@ -20,8 +20,8 @@ class TermSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"end_date": "تاریخ پایان ترم باید بعد از تاریخ شروع باشد."})
 
             overlapping_terms = Term.objects.filter(
-                start_date__lte=self.end_date,
-                end_date__gte=self.start_date
+                start_date__lte=end_date,
+                end_date__gte=start_date
             )
 
             if self.instance:
