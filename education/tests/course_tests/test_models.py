@@ -119,3 +119,16 @@ class CourseTeacherModelTests(TestCase):
             phone_number='=+981234567890',
             emergency_number='+989123456789'
         )
+
+    def test_create_course_teacher_assignment(self):
+        assignment = CourseTeacher.objects.create(
+            course_obj= self.course,
+            teacher=self.teacher,
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 11, 1)
+        )
+
+        self.assertEqual(assignment.course_obj, self.course)
+        self.assertEqual(assignment.teacher, self.teacher)
+        self.assertEqual(assignment.start_date, date(2026, 9, 1))
+        self.assertEqual(assignment.end_date, date(2026, 11, 1))
