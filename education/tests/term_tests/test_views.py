@@ -65,3 +65,121 @@ class TermViewTest(APITestCase):
         response = self.client.get(self.list_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_denied_for_teacher(self):
+        self.client.force_authenticate(self.teacher)
+
+        response = self.client.post(self.list_url, 
+            {
+            'start_date': '2026-09-01', 
+            'end_date': '2026-11-31',
+            'type': 'regular'
+            }
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_create_allowed_for_education_officer(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.post(self.list_url, 
+            {
+                'start_date': '2026-09-01', 
+                'end_date': '2026-11-31',
+                'type': 'regular'
+            }
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        self.assertTrue(
+            Term.objects.filter(
+                start_date=date(2026, 9, 1), 
+                end_date=date(2026, 11, 31)
+            ).exists()
+        )
+
+    def test_create_denied_for_finance_officer(self):
+        self.client.force_authenticate(self.finance_officer)
+
+        response = self.client.post(self.list_url, 
+            {
+            'start_date': '2026-09-01', 
+            'end_date': '2026-11-31',
+            'type': 'regular'
+            }
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_retrieve_allowed_for_teacher(self):
+        self.client.force_authenticate(self.teacher)
+
+        response = self.client.get(self.detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_retrieve_allowed_for_education_officer(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.get(self.detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_retrieve_allowed_for_finance_officer(self):
+        self.client.force_authenticate(self.finance_officer)
+
+        response = self.client.get(self.detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_update_denied_for_teacher(self):
+        self.client.force_authenticate(self.teacher)
+
+        response = self.client.patch(self.detail_url, {'type': 'summer'})
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_update_allowed_for_education_officer(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.patch(self.detail_url, {'type': 'summer'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.term.refresh_from_db()
+
+        self.assertEqual(self.term.type, 'summer')
+
+    def test_update_denied_for_finance_officer(self):
+        self.client.force_authenticate(self.finance_officer)
+
+        response = self.client.patch(self.detail_url, {'type': 'summer'})
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_denied_for_teacher(self):
+        self.client.force_authenticate(self.teacher)
+
+        response = self.client.delete(self.detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_allowed_for_education_officer(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.delete(self.detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        self.term.refresh_from_db()
+
+        self.assertTrue(self.term.is_deleted)
+        self.assertIsNotNone(self.term.deleted_at)
+
+    def test_delete_denied_for_finance_officer(self):
+        self.client.force_authenticate(self.finance_officer)
+
+        response = self.client.delete(self.detail_url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
