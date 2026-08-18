@@ -43,3 +43,25 @@ class CourseModelTests(TestCase):
 
     def test_str_returns_expected_value(self):
         self.assertEqual(str(self.course), 'Python (90min) - regular - (2026-09-01 to 2026-11-31)')
+
+    def test_valid_course_durations(self):
+        for duration in [60, 90, 120]:
+            course = Course(
+                school=self.school,
+                term=self.term,
+                subject='English',
+                duration=duration
+            )
+
+            course.full_clean()
+
+    def test_invalid_course_duration_is_rejected(self):
+        course = Course(
+            school=self.school,
+            term=self.term,
+            subject='English',
+            duration=45
+        )
+
+        with self.assertRaises(ValidationError)
+            course.full_clean()
