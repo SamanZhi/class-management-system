@@ -85,3 +85,37 @@ class CourseModelTests(TestCase):
         self.course.soft_delete()
 
         self.assertTrue(Course.all_objects.filter(pk=self.course.pk).exists())     
+
+
+class CourseTeacherModelTests(TestCase):
+    def setUp(self):
+        self.school = School.objects.create(name='School B', address='Address B')
+
+        self.term = Term.objects.create(
+            start_date=date(2026, 10, 1),
+            end_date=date(2026, 12, 20),
+            type='regular'
+        )
+
+        self.course = Course.objects.create(
+            school=self.school,
+            term=self.term,
+            subject='Python',
+            duration=120
+        )
+
+        self.teacher = User.objects.create_user(
+            username='test_teacher',
+            password='pass123',
+            role='teacher',
+            phone_number='=+989123456789',
+            emergency_number='+989876543210'
+        )
+
+        self.teacher2 = User.objects.create_user(
+            username='new_teacher',
+            password='pass456',
+            role='teacher',
+            phone_number='=+981234567890',
+            emergency_number='+989123456789'
+        )
