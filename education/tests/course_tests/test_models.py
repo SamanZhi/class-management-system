@@ -63,5 +63,25 @@ class CourseModelTests(TestCase):
             duration=45
         )
 
-        with self.assertRaises(ValidationError)
+        with self.assertRaises(ValidationError):
             course.full_clean()
+
+    def test_soft_delete_sets_deleted_fields(self):
+        before = timezone.now()
+        
+        self.course.soft_delete()
+        self.course.refresh_from_db()
+
+        self.assertTrue(self.course.is_deleted)
+        self.assertIsNotNone(self.course.deleted_at)
+        self.assertGreaterEqual(self.course.deleted_at, before)
+
+    def test_soft_deleted_course_is_excluded_from_default_manager(self):
+        self.course.soft_delete()
+
+        self.assertFalse(Course.objects.filter(pk=self.course.pk).exists())
+
+    def test_soft_deleted_course_is_visible_in_all_objects_manager(self):
+        self.course.soft_delete()
+
+        self.assertTrue(Course.all_objects.filter(pk=self.course.pk).exists())     
