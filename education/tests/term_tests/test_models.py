@@ -57,3 +57,31 @@ class TermModelTest(TestCase):
         term = self.create_term(start_date=date(2027, 6, 1), end_date=date(2027, 6, 30), type='summer')
 
         self.assertEqual(term.type, 'summer')
+
+    def test_soft_delete_sets_is_deleted_and_deleted_at(self):
+        term = self.create_term()
+
+        before=timezone.now()
+
+        term.soft_delete()
+        term.refresh_from_db()
+
+        self.assertTrue(term.is_deleted)
+        self.assertIsNotNone(term.deleted_at)
+        self.assertGreaterEqual(term.deleted_at, before)
+
+    def test_soft_deleted_terms_are_excluded_from_default_manager(self):
+        term = self.create_term()
+
+        term.soft_delete()
+
+        self.assertFalse(Term.objects.filter(pk=term.pk).exists())
+
+    def test_soft_deleted_are_visible_in_all_objects_manager(self):
+        term = self.create_term()
+
+        term.soft_delete()
+
+        deleted_term = Term.all_objects.get(pk=term.pk)
+
+        self.assertTrue(deleted_term.is_deleted)
