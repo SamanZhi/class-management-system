@@ -34,7 +34,7 @@ class TermViewTest(APITestCase):
             start_date=date(2026, 9, 1),
             end_date=date(2026, 11, 31),
             type='regular'
-        ), 
+        ),
 
         self.list_url = reverse('term_list')
         self.detail_url= reverse('term_detail', args=[self.term.id]
@@ -183,3 +183,31 @@ class TermViewTest(APITestCase):
         response = self.client.delete(self.detail_url)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_create_invalid_date_range_returns_400(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.post(
+            self.list_url, 
+            {
+                'start_date': '2026-09-30', 
+                'end_date': '2026-09-01',
+                'type': 'regular'
+            }
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_overlapping_term_returns_400(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.post(
+            self.list_url,
+            {
+               'start_date': '2026-09-10', 
+                'end_date': '2026-10-30',
+                'type': 'regular' 
+            }
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
