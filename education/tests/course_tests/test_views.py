@@ -118,3 +118,32 @@ class CourseViewTests(APITestCase):
             status.HTTP_200_OK
         )
 
+    def test_filter_courses_by_school(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.get(
+            self.list_url,
+            {'school': self.school.id}
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+        self.assertEqual(len(response.data), 2)
+
+    def test_filter_courses_by_term(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.get(
+            self.list_url,
+            {'term': self.term.id}
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+        self.assertEqual(len(response.data), 2)
