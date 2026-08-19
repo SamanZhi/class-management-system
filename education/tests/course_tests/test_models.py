@@ -210,3 +210,16 @@ class CourseTeacherModelTests(TestCase):
 
         assignment.full_clean()
 
+    def test_soft_delete_assignment(self):
+        assignment = CourseTeacher.objects.create(
+            course_obj= self.course,
+            teacher=self.teacher,
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 10, 25) 
+        )
+
+        assignment.soft_delete()
+        assignment.refresh_from_db()
+
+        self.assertTrue(assignment.is_deleted)
+        self.assertIsNotNone(assignment.deleted_at)
