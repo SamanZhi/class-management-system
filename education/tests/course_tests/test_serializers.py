@@ -134,3 +134,26 @@ class CourseTeacherSerializerTests(TestCase):
             phone_number='=+981234567890',
             emergency_number='+989123456789'
         )
+
+    def test_serialized_fields(self):
+        assignment = CourseTeacher.objects.create(
+            course_obj= self.course,
+            teacher=self.teacher,
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 11, 30)
+        )
+
+        data = CourseTeacherSerializer(assignment).data
+
+        self.assertEqual(
+            set(data.keys()), 
+            {
+                'id',
+                'course_obg=j',
+                'teacher',
+                'start_date',
+                'end_date',
+                'created_at',
+                'updated_at'
+            }
+        )
