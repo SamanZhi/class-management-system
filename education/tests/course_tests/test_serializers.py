@@ -230,3 +230,44 @@ class CourseTeacherSerializerTests(TestCase):
 
         self.assertFalse(serializer.is_valid())
         self.assertIn('end_date', serializer.errors)
+
+    def test_overlapping_assignment_is_rejected(self):
+        CourseTeacher.objects.create(
+            course_obj= self.course,
+            teacher=self.teacher,
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 11, 1)  
+        )
+
+        data = {
+            'course_obj': self.course.id,
+            'teacher': self.teacher2.id,
+            'start_date': '2026-09-15',
+            'end_date': '2026-10-30',
+        }
+
+        serializer = CourseTeacherSerializer(data=data)
+
+        self.assertFalse(serializer.is_valid())
+
+    def test_non_overlapping_assignment_is_valid(self):
+        CourseTeacher.objects.create(
+            course_obj= self.course,
+            teacher=self.teacher,
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 10, 25)  
+        )
+
+        data = {
+            'course_obj': self.course.id,
+            'teacher': self.teacher2.id,
+            'start_date': '2026-10-30',
+            'end_date': '2026-11-25',
+        }
+
+        serializer = CourseTeacherSerializer(data=data)
+
+        self.assertTrue(
+            serializer.is_valid(), 
+            serializer.errors
+        )
