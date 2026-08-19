@@ -187,4 +187,46 @@ class CourseTeacherSerializerTests(TestCase):
 
         serializer = CourseTeacherSerializer(data=data)
 
-        self.assertTrue(serializer.is_valid(), serializer.errors)
+        self.assertTrue(
+            serializer.is_valid(), 
+            serializer.errors
+        )
+
+    def test_end_date_before_start_date_is_rejected(self):
+        data = {
+            'course_obj': self.course.id,
+            'teacher': self.teacher.id,
+            'start_date': '2026-09-20',
+            'end_date': '2026-09-01',
+        }
+
+        serializer = CourseTeacherSerializer(data=data)
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('end_date', serializer.errors)
+
+    def test_start_date_before_term_is_rejected(self):
+        data = {
+            'course_obj': self.course.id,
+            'teacher': self.teacher.id,
+            'start_date': '2026-08-30',
+            'end_date': '2026-11-01',
+        }
+
+        serializer = CourseTeacherSerializer(data=data)
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('start_date', serializer.errors)
+
+    def test_end_date_after_term_is_rejected(self):
+        data = {
+            'course_obj': self.course.id,
+            'teacher': self.teacher.id,
+            'start_date': '2026-09-01',
+            'end_date': '2026-12-01',
+        }
+
+        serializer = CourseTeacherSerializer(data=data)
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('end_date', serializer.errors)
