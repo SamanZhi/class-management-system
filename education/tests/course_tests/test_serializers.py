@@ -157,3 +157,34 @@ class CourseTeacherSerializerTests(TestCase):
                 'updated_at'
             }
         )
+
+    def test_only_teacher_role_users_are_valid_for_assignment(self):
+        non_teacher = User.objects.create_user(
+            username='test_edu_officer',
+            password='pass123',
+            role='education_officer',
+        )
+
+        data = {
+            'course_obj': self.course.id,
+            'teacher': non_teacher.id,
+            'start_date': '2026-09-01',
+            'end_date': '2026-11-01',
+        }
+
+        serializer = CourseTeacherSerializer(data=data)
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('teacher', serializer.errors)
+
+    def test_valid_assignment_data(self):
+        data = {
+            'course_obj': self.course.id,
+            'teacher': self.teacher.id,
+            'start_date': '2026-09-01',
+            'end_date': '2026-11-01',
+        }
+
+        serializer = CourseTeacherSerializer(data=data)
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
