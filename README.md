@@ -2,212 +2,495 @@
 
 Django REST API for managing classes, session reports, and instructor payroll calculation.
 
-# Teacher and Payroll Management System — Phase 2
+This project is the final project of **Maktab 141 Python Bootcamp** and is being developed in multiple phases.
 
 ---
 
-## 📋 فهرست مطالب
+## Project Overview
 
-* [معرفی پروژه](#معرفی-پروژه)
-* [قابلیت‌های پیاده‌سازی‌شده](#قابلیتهای-پیادهسازی‌شده)
-* [ساختار پروژه](#ساختار-پروژه)
-* [نصب و راه‌اندازی](#نصب-و-راهاندازی)
-* [راهنمای استفاده](#راهنمای-استفاده)
-* [API Endpoints](#api-endpoints)
-* [تست‌ها](#تستها)
-* [محدودیت‌ها و نکات](#محدودیتها-و-نکات)
-* [تصمیمات فنی](#تصمیمات-فنی)
-* [فازهای بعدی](#فازهای-بعدی)
+The system is designed for an educational company that manages classes in different schools.
 
----
+The main roles in the system are:
 
-## معرفی پروژه
+* **Teacher** — teaches classes and submits session reports.
+* **Education Officer** — manages schools, terms, classes, teacher-class assignments, and reviews session reports.
+* **Finance Officer** — manages payroll rates and calculates monthly teacher salaries.
 
-این پروژه یک سیستم مدیریت مربیان و حقوق است که در چهار فاز توسعه می‌یابد.
-
-اهداف اصلی پروژه عبارت‌اند از:
-
-* مدیریت کاربران با نقش‌های مختلف:
-  * مربی (`teacher`)
-  * کارشناس آموزش (`education_officer`)
-  * کارشناس مالی (`finance_officer`)
-* ثبت و مدیریت جلسات کلاسی
-* تأیید و رد گزارش‌های جلسات
-* محاسبه و پردازش حقوق مربیان
-
-> **وضعیت فعلی:** فاز ۲ — مدیریت مدارس، ترم‌ها، کلاس‌ها و تخصیص مربیان
+The project is implemented as an API using Django and Django REST Framework.
 
 ---
 
-## قابلیت‌های پیاده‌سازی‌شده
+## Current Progress
 
-### ✅ فاز ۱: زیرساخت کاربری و احراز هویت
-* **مدل کاربری سفارشی (Custom User Model):** ارث‌بری از `AbstractUser` همراه با فیلدهای نقش (`role`)، شماره تماس (`phone_number`) و شماره اضطراری (`emergency_number`).
-* **احراز هویت JWT:** استفاده از `simplejwt` برای مدیریت نشست‌ها و توکن‌ها.
-* **کنترل دسترسی مبتنی بر نقش (RBAC):** پیاده‌سازی پرمیشن‌های اختصاصی مانند `IsTeacher`، `IsEducationOfficer` و `IsFinanceOfficer`.
-
-### ✅ فاز ۲: مدیریت مدارس، ترم‌ها و کلاس‌ها
-* **اپلیکیشن مدارس (`schools`):**
-  * ایجاد مدل `School` دارای فیلدهای `name` و `address`.
-  * مدیریت مدارس فعال با استفاده از منطق Soft Delete.
-* **اپلیکیشن ترم‌ها (`terms`):**
-  * ایجاد مدل `Term` دارای فیلدهای `name`، `start_date` و `end_date` برای مشخص کردن بازه‌های آموزشی.
-* **اپلیکیشن کلاس‌ها (`classes`):**
-  * ایجاد مدل `Class` (شامل فیلدهای ارتباط با مدرسه و ترم جاری).
-  * ایجاد مدل واسط `ClassTeacher` برای انتساب مربیان به کلاس‌ها همراه با نرخ پرداختی ساعتی (`hourly_rate`) و بازه زمانی فعالیت مربی (`start_date` و `end_date`).
-* **منطق جلوگیری از همپوشانی زمانی مربیان (Overlap Validation):**
-  * پیاده‌سازی متد `clean()` در سطح مدل و سریالایزر در `ClassTeacher` جهت جلوگیری از انتساب همزمان بیش از یک مربی به یک کلاس در بازه‌های زمانی متداخل (با در نظر گرفتن بازه‌های بدون تاریخ پایان یا `None`).
-
-### 🗑️ زیرساخت Soft Delete
-پیاده‌سازی متد اختصاصی حذف نرم در مدل پایه `SoftDeleteModel` در اپ `core`:
-* فیلتر خودکار رکوردهای حذف‌نشده از طریق چرخه‌ی پیش‌فرض `objects` (با استفاده از `SoftDeleteManager`).
-* دسترسی به تمام رکوردهای حذف‌شده و حذف‌نشده با استفاده از `all_objects`.
-* پیاده‌سازی متد `soft_delete()` برای تغییر فیلد `is_deleted` به `True` و ثبت زمان حذف در `deleted_at` بدون حذف فیزیکی از دیتابیس.
+| Phase   | Description                      | Status      |
+| ------- | -------------------------------- | ----------- |
+| Phase 0 | Requirements Q&A                 | Completed   |
+| Phase 1 | System Foundation, Users & Roles | Completed   |
+| Phase 2 | School, Term & Class Management  | Completed   |
+| Phase 3 | Session Reports                  | Not started |
+| Phase 4 | Payroll & Final Integration      | Not started |
 
 ---
 
-## ساختار پروژه
+# Phase 1 — System Foundation, Users & Roles
+
+## What Was Built
+
+The following functionality was implemented during Phase 1:
+
+* User management with three system roles:
+
+  * Teacher
+  * Education Officer
+  * Finance Officer
+* Role-based access control.
+* JWT authentication.
+* Login functionality.
+* An endpoint for checking the currently authenticated user and their role.
+* Teacher-specific information such as:
+
+  * Name
+  * Contact phone
+  * Emergency contact
+* Basic data models required for the following concepts:
+
+  * School
+  * Term
+  * Class
+* Management command for creating users with a specific role.
+* API structure for the project.
+* Tests for models, serializers, and views.
+
+The system does not provide public user registration. Users are created by the system administrator through the management command.
+
+---
+
+# Phase 2 — School, Term & Class Management
+
+## What Was Built
+
+Phase 2 focuses on building the educational structure of the system and connecting teachers to classes.
+
+### School Management
+
+Education Officers can:
+
+* Create schools.
+* Update schools.
+* View a list of schools.
+* View school details.
+
+### Term Management
+
+The system supports academic terms with:
+
+* Start date.
+* End date.
+* Term type:
+
+  * Normal
+  * Summer
+
+Terms cannot overlap.
+
+### Class Management
+
+Education Officers can create and manage classes connected to:
+
+* A school.
+* A term.
+* A teacher through a separate teacher-class relationship.
+
+Each class has a session duration, which can only be one of:
+
+* 60 minutes
+* 90 minutes
+* 120 minutes
+
+Invalid session durations are rejected by validation.
+
+### Teacher-Class Assignment
+
+A teacher can be assigned to a class with:
+
+* Assignment start date.
+* Optional assignment end date.
+
+A class can have multiple teachers during its lifetime, as long as their assignment periods do not overlap.
+
+Teachers can view only the classes assigned to them, including their current and previous classes.
+
+### Phase 2 Tests
+
+Tests were added for the Phase 2 components, including:
+
+* Model tests.
+* Serializer tests.
+* View/API tests.
+* Validation rules.
+* Teacher-class assignment rules.
+* Role-based access restrictions.
+
+---
+
+# Project Structure
+
 ```text
-project_root/
-│
-├── config/                         # تنظیمات پروژه
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-│
-├── core/                           # ابزارها و مدل‌های پایه مشترک
-│   ├── models.py                   # SoftDeleteModel و SoftDeleteManager
-│   └── views.py
-│
-├── users/                          # مدیریت کاربران و احراز هویت
-│   ├── models.py                   # مدل User سفارشی
-│   ├── serializers.py              # UserSerializer
-│   ├── views.py                    # Login, Me endpoints
-│   ├── permissions.py              # IsTeacher, IsEducationOfficer, ...
-│   ├── admin.py                    # CustomUserAdmin
-│   └── tests/
-│       ├── test_models.py
-│       ├── test_authentication.py
-│       └── test_permissions.py
-│
-├── schools/                        # مدیریت مدارس (فاز ۲)
-│   ├── models.py                   # مدل School (ارث‌بری از SoftDeleteModel)
-│   ├── serializers.py              # SchoolSerializer
-│   ├── views.py                    # SchoolListView, SchoolDetailView
-│   ├── admin.py                    # مدیریت مدارس در پنل ادمین
-│   └── tests/                      # تست‌های اختصاصی مدارس
-│       ├── test_models.py
-│       ├── test_serializers.py
-│       └── test_views.py
-│
-├── terms/                          # مدیریت ترم‌ها (فاز ۲)
-│   ├── models.py                   # مدل Term (ارث‌بری از SoftDeleteModel)
-│   ├── serializers.py              # TermSerializer
-│   ├── views.py                    # TermListView, TermDetailView
-│   └── admin.py
-│
-├── classes/                        # مدیریت کلاس‌ها و مربیان (فاز ۲)
-│   ├── models.py                   # مدل‌های Class و ClassTeacher
-│   ├── serializers.py              # سریالایزرهای Class و ClassTeacher
-│   ├── views.py                    # ClassListView, ClassDetailView, ClassTeacherView
-│   ├── admin.py
-│   └── tests/                      # تست‌های جامع همپوشانی و عملکرد
-│       ├── test_models.py
-│       ├── test_serializers.py
-│       └── test_views.py
+class-management-system/
 │
 ├── manage.py
+│
+├── config/
+│   ├── settings.py
+│   ├── urls.py
+│   ├── wsgi.py
+│   └── asgi.py
+│
+├── apps/
+│   ├── users/
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── views.py
+│   │   ├── urls.py
+│   │   └── tests/
+│   │
+│   ├── school/
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── views.py
+│   │   ├── urls.py
+│   │   └── tests/
+│   │
+│   ├── term/
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── views.py
+│   │   ├── urls.py
+│   │   └── tests/
+│   │
+│   └── course/
+│       ├── models.py
+│       ├── serializers.py
+│       ├── views.py
+│       ├── urls.py
+│       └── tests/
+│
 ├── requirements.txt
-└── README.md
+├── README.md
+└── .gitignore
+```
+
+> The exact directory structure may change as new phases are implemented.
 
 ---
 
-## نصب و راه‌اندازی
+# Requirements
 
-### پیش‌نیازها
-* Python 3.10+
-* Django 4.2+
-* Django REST Framework 3.14+
-* djangorestframework-simplejwt 5.3+
+Before running the project, make sure you have:
 
-### مراحل نصب و راه‌اندازی مشابه فازهای قبلی است:
-1. فعال‌سازی محیط مجازی و نصب وابستگی‌ها با `pip install -r requirements.txt`.
-2. اعمال مهاجرت‌ها با دستورهای `python manage.py makemigrations` و `python manage.py migrate`.
-3. راه‌اندازی سرور با `python manage.py runserver`.
+* Python 3.x
+* PostgreSQL
+* pip
+* Git
 
 ---
 
-## راهنمای استفاده و API Endpoints (فاز ۲)
+# Installation
 
-تمامی مسیرهای فاز ۲ نیاز به احراز هویت JWT با نقش مناسب (مثلاً کارشناس آموزش یا `education_officer`) دارند.
+## 1. Clone the repository
 
-| متد | مسیر (Endpoint) | توضیحات |
-| :--- | :--- | :--- |
-| `GET` | `/api/schools/` | لیست تمامی مدارس فعال |
-| `POST` | `/api/schools/` | ثبت مدرسه جدید |
-| `GET` | `/api/schools/<id>/` | جزئیات یک مدرسه خاص |
-| `PUT` | `/api/schools/<id>/` | به‌روزرسانی کامل اطلاعات مدرسه |
-| `DELETE` | `/api/schools/<id>/` | حذف نرم (Soft Delete) مدرسه |
-| `GET` | `/api/terms/` | لیست ترم‌های ثبت‌شده |
-| `POST` | `/api/terms/` | ثبت ترم جدید |
-| `GET` | `/api/classes/` | لیست کلاس‌ها (با فیلترهای اختیاری `school` و `term`) |
-| `POST` | `/api/classes/` | ایجاد کلاس جدید |
-| `GET` | `/api/classes/<id>/` | جزئیات کلاس به همراه مشخصات مربی جاری (`current_teacher`) |
-| `POST` | `/api/classes/<id>/teachers/` | انتساب یک مربی جدید به کلاس با رعایت عدم همپوشانی زمانی |
+```bash
+git clone <repository-url>
+cd class-management-system
+```
+
+## 2. Create a virtual environment
+
+### Linux / macOS
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### Windows
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+## 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
 
 ---
 
-## تست‌ها
+# Environment Variables
 
-در فاز ۲، ساختار فایل‌های تست از حالت تک‌فایلی به ساختار ماژولار تفکیک شد و تست‌های واحد جامع در سطح مدل‌ها، سریالایزرها و ویوها پیاده‌سازی شدند.
+Create a `.env` file in the project root and configure the required environment variables.
 
-### سناریوهای تستی پوشش داده‌شده:
+Example:
 
-#### ۱. تست‌های مدارس (`schools/tests/`)
-* **تست‌های مدل:** بررسی صحت فیلدهای مدل `School` و اطمینان از عملکرد درست متد `soft_delete()` (تغییر وضعیت `is_deleted` به جای حذف فیزیکی).
-* **تست‌های سریالایزر:** بررسی اعتبار سنجی ورودی‌ها و ساختار خروجی داده‌ها.
-* **تست‌های API:** دسترسی‌سنجی متدهای `GET` ،`POST` و `DELETE` برای کاربران مهمان، مربیان و کارشناسان آموزش.
+```env
+DEBUG=True
 
-#### ۲. تست‌های کلاس و همپوشانی مربیان (`classes/tests/`)
-* **تست اعتبارسنجی همپوشانی بازه‌های زمانی (Overlap Validation):**
-  * سناریوی همپوشانی کامل دو بازه زمانی.
-  * سناریوی ثبت بازه کاری جدید در شرایطی که بازه مربی قبلی فاقد تاریخ پایان (`end_date=None`) است.
-  * صحت ثبت مربیان در بازه‌های زمانی متوالی بدون همپوشانی.
-* **تست‌های API:** بررسی فیلتر کردن کلاس‌ها بر اساس ترم و مدرسه و دسترسی مربی جاری در خروجی سریالایزر کلاس.
+SECRET_KEY=your-secret-key
 
-### نحوه اجرای تست‌ها
-برای اجرای کامل تست‌های سیستم:
-bash
+DB_NAME=your_database
+DB_USER=your_database_user
+DB_PASSWORD=your_database_password
+DB_HOST=localhost
+DB_PORT=5432
+```
+
+Do not commit real credentials or secret keys to the repository.
+
+---
+
+# Database Setup
+
+After configuring PostgreSQL and the environment variables, run:
+
+```bash
+python manage.py migrate
+```
+
+---
+
+# Creating Users
+
+The project does not have public user registration.
+
+Users can be created using the Django management command.
+
+Example:
+
+```bash
+python manage.py create_user --role=teacher
+```
+
+Other supported roles:
+
+```text
+teacher
+education_officer
+finance_officer
+```
+
+The exact required arguments depend on the implementation of the management command.
+
+---
+
+# Running the Project
+
+Start the Django development server:
+
+```bash
+python manage.py runserver
+```
+
+The API will then be available at:
+
+```text
+http://127.0.0.1:8000/
+```
+
+---
+
+# Running Tests
+
+Run the complete test suite with:
+
+```bash
 python manage.py test
+```
+
+To run tests for a specific application:
+
+```bash
+python manage.py test <app_name>
+```
+
+For example:
+
+```bash
+python manage.py test school
+```
+
+Tests cover the main business rules and role-based access boundaries required by the project.
 
 ---
 
-## محدودیت‌ها و نکات (فاز ۲)
+# Authentication
 
-### ⚠️ نکات پیاده‌سازی
-1. **عدم امکان حذف فیزیکی:** در اپلیکیشن‌های `schools` ،`terms` و `classes` امکان حذف دائمی (Hard Delete) از طریق وب‌سرویس وجود ندارد و حذف‌ها همگی به صورت سیستمی و از نوع Soft Delete هستند.
-2. **مدیریت مربیان جاری:** متد `get_current_teacher` در سریالایزر کلاس، تاریخ جاری سرور را ملاک مقایسه با فیلدهای `start_date` و `end_date` در مدل واسط قرار می‌دهد تا مربی فعال را شناسایی و بازگرداند.
-3. **عدم حذف مربیان:** بر اساس الزامات امنیتی و سیستمی، مدل کاربران (`User`) فاقد فیلد حذف نرم بوده و غیرقابل حذف تعریف شده است.
+The API uses **JWT authentication**.
 
----
+A user must authenticate before accessing protected endpoints.
 
-## تصمیمات فنی
+The authenticated user's role determines which resources and operations are available to them.
 
-### چرا تفکیک تست‌ها به ساختار دایرکتوری؟
-با افزایش پیچیدگی پروژه در فاز ۲ و اضافه شدن منطق‌های اعتبارسنجی همپوشانی، تقسیم تست‌ها به فایل‌های اختصاصی `test_models.py`، `test_serializers.py` و `test_views.py` باعث خوانایی بهتر، نگهداری آسان‌تر و تفکیک وظایف تست‌ها گردید.
+The three supported roles are:
 
----
-
-## فازهای بعدی
-
-* [x] **Phase 1** — زیرساخت و احراز هویت
-* [x] **Phase 2** — مدیریت مدارس، ترم‌ها، کلاس‌ها و تخصیص مربیان
-* [ ] **Phase 3** — ثبت جلسات و سیستم تایید/رد گزارش‌ها
-* [ ] **Phase 4** — محاسبه حقوق و پرداختی مربیان
+```text
+Teacher
+Education Officer
+Finance Officer
+```
 
 ---
 
-## وضعیت پروژه
+# Main Business Rules Implemented So Far
 
-**Current Version:** Phase 2
-**Status:** 🚧 In Development
+## Roles
+
+Each user has one system role.
+
+A user must not be able to access operations belonging to another role.
+
+---
+
+## Terms
+
+* A term has a start date and an end date.
+* Terms must not overlap.
+* A term has a type:
+
+  * Normal
+  * Summer
+
+---
+
+## Classes
+
+* A class belongs to a school and a term.
+* A class has a session duration.
+* Valid session durations are only:
+
+  * 60 minutes
+  * 90 minutes
+  * 120 minutes
+* A class must belong to its term's date range.
+
+---
+
+## Teacher-Class Relationships
+
+Teacher assignments contain a start date and an optional end date.
+
+Multiple teachers can teach the same class during different periods.
+
+Teacher assignment periods must not overlap.
+
+A teacher can access their own current and previous classes but not classes belonging to other teachers.
+
+---
+
+# Known Limitations & Design Shortcuts
+
+The following limitations or simplifications are intentional at the current stage of the project:
+
+* The project currently covers only Phase 1 and Phase 2 requirements.
+* Session reporting has not been implemented yet.
+* Payroll calculation has not been implemented yet.
+* No frontend/web UI is included. The project is API-based.
+* Public user registration is not supported.
+* The project uses the simplified three-role system defined by the project requirements.
+* Features outside the project scope, such as students, parent accounts, notifications, support tickets, and temporary substitute teachers, are not implemented.
+* Some optional features from later phases are intentionally postponed.
+* The API and data model may change in future phases as new requirements are implemented.
+
+---
+
+# API Testing
+
+The API can be tested using tools such as:
+
+* Postman
+* Django REST Framework browsable API
+* Any HTTP client
+
+The project does not require a separate frontend application.
+
+---
+
+# Development Workflow
+
+The project is developed phase by phase.
+
+The main branches are:
+
+```text
+main
+dev
+```
+
+The `dev` branch is used for development.
+
+Completed phases are merged into `main` and tagged with the corresponding phase tag.
+
+Example:
+
+```text
+phase-1
+phase-2
+phase-3
+phase-4
+```
+
+The current completed version is tagged as:
+
+```text
+phase-2
+```
+
+---
+
+# Future Phases
+
+## Phase 3 — Session Reports
+
+Planned functionality includes:
+
+* Session management.
+* Session reports.
+* Teacher report submission.
+* 48-hour submission rule.
+* Report approval/rejection.
+* Report editing and resubmission.
+* Education Officer review.
+
+---
+
+## Phase 4 — Payroll & Final Integration
+
+Planned functionality includes:
+
+* Teacher payroll rates.
+* Monthly payroll calculation.
+* Different session durations.
+* Summer-term coefficient.
+* Late report handling.
+* Payroll history.
+* Full end-to-end system testing.
+
+---
+
+# Project Requirements Reference
+
+The official project requirements define four technical phases after the initial Q&A phase.
+
+The first two completed phases focus on:
+
+1. System foundation, users, roles and authentication.
+2. School, term, class and teacher-class management.
+
+Testing is mandatory throughout the project, especially for model behavior, role-based access boundaries, and the main business rules of each phase.
+
+---
+
+# License
+
+This project was developed as part of the **Maktab 141 Python Bootcamp Final Project**.

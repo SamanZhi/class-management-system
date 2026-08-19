@@ -1,0 +1,549 @@
+from datetime import date
+
+from django.urls import reverse
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.test import APITestCase
+
+from education.models import Course, CourseTeacher, School, Term
+
+from users.models import User
+
+
+class CourseViewTests(APITestCase):
+    def setUp(self):
+        self.school = School.objects.create(name='School A', address='Address A')
+
+        self.term = Term.objects.create(
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 11, 31),
+            type='regular'
+        )
+
+        
+        self.teacher = User.objects.create_user(
+            username='test_teacher',
+            password='pass123',
+            role='teacher',
+            phone_number='=+989123456789',
+            emergency_number='+989876543210'
+        )
+
+        
+        self.teacher2 = User.objects.create_user(
+            username='new_teacher',
+            password='pass456',
+            role='teacher',
+            phone_number='=+981234567890',
+            emergency_number='+989123456789'
+        )
+
+        self.education_officer = User.objects.create_user(
+            username='edu_officer A', password='pass456', role='education_officer',
+        )
+
+        self.finance_officer = User.objects.create_user(
+            username='fin_officer A', password='pass789', role='finance_officer',
+        )
+
+        self.course = Course.objects.create(
+            school=self.school,
+            term=self.term,
+            subject='Python',
+            duration=90
+        )
+
+        self.teacher_assignment = CourseTeacher.objects.create(
+            course_obj= self.course,
+            teacher=self.teacher,
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 10, 30)
+        )
+
+        self.course2 = Course.objects.create(
+            school=self.school,
+            term=self.term,
+            subject='Django',
+            duration=120
+        )
+
+        CourseTeacher.objects.create(
+            course_obj= self.course2,
+            teacher=self.teacher2,
+            start_date=date(2026, 9, 15),
+            end_date=date(2026, 11, 10)
+        )
+
+        self.list_url = reverse('course-list')
+        self.detail_url = reverse(
+            'course-detail', 
+            args=[self.course.id]
+        )
+
+    def test_list_requires_authentication(self):
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_401_UNAUTHORIZED
+        )
+
+    def test_list_allowed_for_teacher(self):
+        self.client.force_authenticate(self.teacher)
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+    def test_list_allowed_for_education_officer(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+    def test_list_allowed_for_finance_officer(self):
+        self.client.force_authenticate(self.finance_officer)
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+        
+    def test_teacher_only_sees_own_courses(self):
+        self.client.force_authenticate(self.teacher)
+
+        response = self.client.get(self.list_url)
+
+        returned_ids = {
+            item['id']
+            for item in response.data
+        }
+
+        self.assertIn(self.course.id, returned_ids)
+        self.assertNotIn(self.course2.id, returned_ids)
+
+    def test_filter_courses_by_school(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.get(
+            self.list_url,
+            {'school': self.school.id}
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+        self.assertEqual(len(response.data), 2)
+
+    def test_filter_courses_by_term(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.get(
+            self.list_url,
+            {'term': self.term.id}
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+        self.assertEqual(len(response.data), 2)
+
+    def test_create_denied_for_teacher(self):
+        self.client.force_authenticate(self.teacher)
+
+        response= self.client.post(
+            self.list_url,
+            {
+                'school': self.school.id,
+                'term': self.term.id,
+                'subject': 'New Course',
+                'duration': 60
+            }
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN
+        )
+
+    def test_create_denied_for_education_officer(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response= self.client.post(
+            self.list_url,
+            {
+                'school': self.school.id,
+                'term': self.term.id,
+                'subject': 'New Course',
+                'duration': 60
+            }
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED
+        )
+
+        self.assertTrue(
+            Course.objects.filter(
+                subject='New Course',
+            ).exists()
+        )
+
+    def test_create_denied_for_finance_officer(self):
+        self.client.force_authenticate(self.finance_officer)
+
+        response= self.client.post(
+            self.list_url,
+            {
+                'school': self.school.id,
+                'term': self.term.id,
+                'subject': 'New Course',
+                'duration': 60
+            }
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN
+        )
+
+    def test_retrieve_allowed_for_teacher(self):
+        self.client.force_authenticate(self.teacher)
+
+        response= self.client.get(self.detail_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+    def test_teacher_cannot_retrieve_other_teacher_course(self):
+        self.client.force_authenticate(self.teacher)
+
+        detail_url2 = reverse(
+            'course-detail',
+            args=[self.new_course.id]
+        )
+
+        response =self.client.get(detail_url2)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_404_NOT_FOUND
+        )
+
+    def test_retrieve_allowed_for_education_officer(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response= self.client.get(self.detail_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+    def test_retrieve_allowed_for_finance_officer(self):
+        self.client.force_authenticate(self.finance_officer)
+
+        response= self.client.get(self.detail_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+    def test_update_denied_for_teacher(self):
+        self.client.force_authenticate(self.teacher)
+
+        response = self.client.patch(
+            self.detail_url,
+            {'subject': 'Changed'}
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN
+        )
+
+    def test_update_allowed_for_education_officer(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.patch(
+            self.detail_url,
+            {'subject': 'Changed'}
+        )
+
+        self.course.refresh_from_db()
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+    def test_update_denied_for_finance_officer(self):
+        self.client.force_authenticate(self.finance_officer)
+
+        response = self.client.patch(
+            self.detail_url,
+            {'subject': 'Changed'}
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN
+        )
+
+    def test_delete_denied_for_teacher(self):
+        self.client.force_authenticate(self.teacher)
+
+        response = self.client.delete(self.detail_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN
+        )
+
+    def test_delete_allowed_for_education_officer(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.delete(self.detail_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT
+        )
+
+        self.course.refresh_from_db()
+
+        self.assertTrue(self.course.is_deleted)
+
+    def test_delete_denied_for_finance_officer(self):
+        self.client.force_authenticate(self.finance_officer)
+
+        response = self.client.delete(self.detail_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN
+        )
+
+
+class CourseTeacherViewTests(APITestCase):
+    def setUp(self):
+        self.school = School.objects.create(name='School A', address='Address A')
+
+        self.term = Term.objects.create(
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 11, 31),
+            type='regular'
+        )
+        
+        self.teacher = User.objects.create_user(
+            username='test_teacher',
+            password='pass123',
+            role='teacher',
+            phone_number='=+989123456789',
+            emergency_number='+989876543210'
+        )
+        
+        self.teacher2 = User.objects.create_user(
+            username='new_teacher',
+            password='pass456',
+            role='teacher',
+            phone_number='=+981234567890',
+            emergency_number='+989123456789'
+        )
+
+        self.education_officer = User.objects.create_user(
+            username='edu_officer A', password='pass456', role='education_officer',
+        )
+
+        self.finance_officer = User.objects.create_user(
+            username='fin_officer A', password='pass789', role='finance_officer',
+        )
+
+        self.course = Course.objects.create(
+            school=self.school,
+            term=self.term,
+            subject='Python',
+            duration=90
+        )
+
+        self.assignment = CourseTeacher.objects.create(
+            course_obj= self.course,
+            teacher=self.teacher,
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 10, 30)
+        )
+
+        CourseTeacher.objects.create(
+            course_obj= self.course2,
+            teacher=self.teacher2,
+            start_date=date(2026, 9, 15),
+            end_date=date(2026, 11, 10)
+        )
+
+        self.list_url = reverse('course-teacher-list')
+        self.detail_url = reverse(
+            'course-teacher-detail', 
+            args=[self.assignment.id]
+        )
+
+    def test_list_requires_authentication(self):
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_401_UNAUTHORIZED
+        )
+
+    def test_list_allowed_for_authenticated_user(self):
+        self.client.force_authenticate(self.teacher)
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+    def test_create_denied_for_teacher(self):
+        self.client.force_authenticate(self.teacher)
+
+        response= self.client.post(
+            self.list_url,
+            {
+                'course_obj': self.course.id,
+                'teacher': self.teacher2.id,
+                'start_date': '2026-09-01',
+                'end_date': '2026-11-01',
+            }
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN
+        )
+
+    def test_create_allowed_for_education_officer(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response= self.client.post(
+            self.list_url,
+            {
+                'course_obj': self.course.id,
+                'teacher': self.teacher2.id,
+                'start_date': '2026-09-01',
+                'end_date': '2026-11-01',
+            }
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED
+        )
+
+    def test_create_denied_for_finance_officer(self):
+        self.client.force_authenticate(self.finance_officer)
+
+        response= self.client.post(
+            self.list_url,
+            {
+                'course_obj': self.course.id,
+                'teacher': self.teacher2.id,
+                'start_date': '2026-09-01',
+                'end_date': '2026-11-01',
+            }
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN
+        )
+
+    def test_update_denied_for_teacher(self):
+        self.client.force_authenticate(self.teacher)
+
+        response = self.client.patch(
+            self.detail_url,
+            {'end_date': '2026-09-15'}
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN
+        )
+
+    def test_update_allowed_for_education_officer(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.patch(
+            self.detail_url,
+            {'end_date': '2026-09-15'}
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+    def test_update_denied_for_finance_officer(self):
+        self.client.force_authenticate(self.finance_officer)
+
+        response = self.client.patch(
+            self.detail_url,
+            {'end_date': '2026-09-15'}
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN
+        )
+
+    def test_delete_denied_for_teacher(self):
+        self.client.force_authenticate(self.teacher)
+
+        response = self.client.delete(self.detail_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN
+        )
+
+    def test_delete_allowed_for_education_officer(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.delete(self.detail_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT
+        )
+
+        self.assignment.refresh_from_db()
+
+        self.assertTrue(self.assignment.is_deleted)
+
+    def test_delete_denied_for_finance_officer(self):
+        self.client.force_authenticate(self.finance_officer)
+
+        response = self.client.delete(self.detail_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN
+        )
