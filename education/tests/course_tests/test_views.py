@@ -117,6 +117,19 @@ class CourseViewTests(APITestCase):
             response.status_code,
             status.HTTP_200_OK
         )
+        
+    def test_teacher_only_sees_own_courses(self):
+        self.client.force_authenticate(self.teacher)
+
+        response = self.client.get(self.list_url)
+
+        returned_ids = {
+            item['id']
+            for item in response.data
+        }
+
+        self.assertIn(self.course.id, returned_ids)
+        self.assertNotIn(self.course2.id, returned_ids)
 
     def test_filter_courses_by_school(self):
         self.client.force_authenticate(self.education_officer)
