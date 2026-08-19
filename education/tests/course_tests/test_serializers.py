@@ -275,27 +275,67 @@ class CourseTeacherSerializerTests(TestCase):
 
 class CourseDetailsSerializerTests(TestCase):
     def setUp(self):
-            self.school = School.objects.create(name='School A', address='Address A')
-    
-            self.term = Term.objects.create(
-                start_date=date(2026, 9, 1),
-                end_date=date(2026, 11, 31),
-                type='regular'
-            )
-    
-            self.course = Course.objects.create(
-                school=self.school,
-                term=self.term,
-                subject='Python',
-                duration=90
-            )
-            
-            self.teacher = User.objects.create_user(
-                username='saman_teacher',
-                password='pass123',
-                role='teacher',
-                first_name='Saman',
-                last_name='Zhiani',
-                phone_number='=+989361208772',
-                emergency_number='+989876543210'
-            )
+        self.school = School.objects.create(name='School A', address='Address A')
+
+        self.term = Term.objects.create(
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 11, 31),
+            type='regular'
+        )
+
+        self.course = Course.objects.create(
+            school=self.school,
+            term=self.term,
+            subject='Python',
+            duration=90
+        )
+        
+        self.teacher = User.objects.create_user(
+            username='saman_teacher',
+            password='pass123',
+            role='teacher',
+            first_name='Saman',
+            last_name='Zhiani',
+            phone_number='=+989361208772',
+            emergency_number='+989876543210'
+        )
+
+    def test_current_teacher_is_returned(self):
+        CourseTeacher.objects.create(
+            course_obj= self.course,
+            teacher=self.teacher,
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 10, 25)  
+        )
+
+        data = CourseDetailSerializer(self.course).data
+
+        self.assertIsNotNone(data['current_teacher'])
+        self.assertEqual(
+            data['current_teacher']['id'],
+            self.teacher.id
+        )
+        self.assertEqual(
+            data['current_teacher']['first_name'], 
+            'Saman'
+        )
+        self.assertEqual(
+            data['current_teacher']['last_name'], 
+            'Zhiani'
+        )
+        self.assertEqual(
+            data['current_teacher']['phone_number'], 
+            '+989361208772'
+        )
+
+    def current_teacher_is_none_when_no_active_assignment(self):
+        CourseTeacher.objects.create(
+            course_obj= self.course,
+            teacher=self.teacher,
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 10, 25)  
+        )
+
+        data = CourseDetailSerializer(self.course).data
+
+        self.assertIsNone(data['current_teacher'])
