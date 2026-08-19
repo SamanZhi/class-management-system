@@ -136,7 +136,7 @@ class CourseTeacherModelTests(TestCase):
     def test_end_date_must_be_after_start_date(self):
         assignment = CourseTeacher(
             course_obj= self.course,
-            teacher=self.teacher2,
+            teacher=self.teacher,
             start_date=date(2026, 9, 10),
             end_date=date(2026, 9, 1)            
         )
@@ -147,7 +147,7 @@ class CourseTeacherModelTests(TestCase):
     def test_assignment_start_date_must_be_inside_term(self):
         assignment = CourseTeacher(
             course_obj= self.course,
-            teacher=self.teacher2,
+            teacher=self.teacher,
             start_date=date(2026, 8, 25),
             end_date=date(2026, 9, 15)            
         )
@@ -158,7 +158,7 @@ class CourseTeacherModelTests(TestCase):
     def test_assignment_end_date_must_be_inside_term(self):
         assignment = CourseTeacher(
             course_obj= self.course,
-            teacher=self.teacher2,
+            teacher=self.teacher,
             start_date=date(2026, 10, 25),
             end_date=date(2026, 12, 25)            
         )
@@ -167,10 +167,46 @@ class CourseTeacherModelTests(TestCase):
                     assignment.full_clean()
 
     def test_assignment_can_have_no_end_date(self):
-         assignment = CourseTeacher(
-             course_obj= self.course,
-             teacher=self.teacher2,
-             start_date=date(2026, 10, 25)           
-         )
+        assignment = CourseTeacher(
+        course_obj= self.course,
+        teacher=self.teacher,
+        start_date=date(2026, 10, 25)           
+        )
 
-         assignment.full_clean()
+        assignment.full_clean()
+
+    def test_overlapping_assignments_are_rejected(self):
+        CourseTeacher.objects.create(
+            course_obj= self.course,
+            teacher=self.teacher,
+            start_date=date(2026, 9, 25),
+            end_date=date(2026, 11, 25) 
+        )
+
+        overlapping = CourseTeacher(
+            course_obj= self.course,
+            teacher=self.teacher2,
+            start_date=date(2026, 10, 25),
+            end_date=date(2026, 11, 15) 
+        )
+
+        with self.assertRaises(ValidationError):
+             overlapping.full_clean()
+
+    def test_non_overlapping_assignments_are_valid(self):
+        CourseTeacher.objects.create(
+            course_obj= self.course,
+            teacher=self.teacher,
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 10, 25) 
+        )
+
+        assignment = CourseTeacher(
+            course_obj= self.course,
+            teacher=self.teacher2,
+            start_date=date(2026, 10, 26),
+            end_date=date(2026, 11, 25) 
+        )
+
+        assignment.full_clean()
+
