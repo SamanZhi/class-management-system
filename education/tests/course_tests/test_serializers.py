@@ -28,3 +28,20 @@ class CourseSerializerTests(TestCase):
             subject='Python',
             duration=90
         )
+
+    def test_serialized_fields(self):
+        data = CourseSerializer(self.course).data
+
+        self.assertEqual(
+            set(data.keys()), 
+            {
+                'id',
+                'school',
+                'term',
+                'subject',
+                'duration',
+                'is_deleted',
+                'created_at',
+                'updated_at'
+            }
+        )
