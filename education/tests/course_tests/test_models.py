@@ -92,7 +92,7 @@ class CourseTeacherModelTests(TestCase):
         self.school = School.objects.create(name='School B', address='Address B')
 
         self.term = Term.objects.create(
-            start_date=date(2026, 10, 1),
+            start_date=date(2026, 9, 1),
             end_date=date(2026, 12, 20),
             type='regular'
         )
@@ -132,3 +132,45 @@ class CourseTeacherModelTests(TestCase):
         self.assertEqual(assignment.teacher, self.teacher)
         self.assertEqual(assignment.start_date, date(2026, 9, 1))
         self.assertEqual(assignment.end_date, date(2026, 11, 1))
+
+    def test_end_date_must_be_after_start_date(self):
+        assignment = CourseTeacher(
+            course_obj= self.course,
+            teacher=self.teacher2,
+            start_date=date(2026, 9, 10),
+            end_date=date(2026, 9, 1)            
+        )
+
+        with self.assertRaises(ValidationError):
+            assignment.full_clean()
+
+    def test_assignment_start_date_must_be_inside_term(self):
+        assignment = CourseTeacher(
+            course_obj= self.course,
+            teacher=self.teacher2,
+            start_date=date(2026, 8, 25),
+            end_date=date(2026, 9, 15)            
+        )
+
+        with self.assertRaises(ValidationError):
+                    assignment.full_clean()
+
+    def test_assignment_end_date_must_be_inside_term(self):
+        assignment = CourseTeacher(
+            course_obj= self.course,
+            teacher=self.teacher2,
+            start_date=date(2026, 10, 25),
+            end_date=date(2026, 12, 25)            
+        )
+
+        with self.assertRaises(ValidationError):
+                    assignment.full_clean()
+
+    def test_assignment_can_have_no_end_date(self):
+         assignment = CourseTeacher(
+             course_obj= self.course,
+             teacher=self.teacher2,
+             start_date=date(2026, 10, 25)           
+         )
+
+         assignment.full_clean()
