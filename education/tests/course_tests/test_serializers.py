@@ -1,13 +1,12 @@
 from datetime import date
 
 from django.test import TestCase
-from django.utils import timezone
 
 from education.models import Course, CourseTeacher, School, Term
 from education.serializers import (
     CourseDetailSerializer,
     CourseSerializer,
-    CourseTeacherSerializer
+    CourseTeacherSerializer,
 )
 from users.models import User
 
@@ -140,7 +139,7 @@ class CourseTeacherSerializerTests(TestCase):
             course_obj= self.course,
             teacher=self.teacher,
             start_date=date(2026, 9, 1),
-            end_date=date(2026, 11, 30)
+            end_date=date(2026, 10, 30)
         )
 
         data = CourseTeacherSerializer(assignment).data
