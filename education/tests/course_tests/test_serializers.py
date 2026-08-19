@@ -45,3 +45,57 @@ class CourseSerializerTests(TestCase):
                 'updated_at'
             }
         )
+
+    def test_valid_course_data(self):
+        data = {
+            'school': self.school,
+            'term': self.term.id,
+            'subject': 'Django',
+            'duration': 120
+        }
+
+        serializer = CourseSerializer(data=data)
+
+        self.assertTrue(
+            serializer.is_valid(),
+            serializer.errors
+        )
+
+    def test_invalid_duration_is_rejected(self):
+        data = {
+            'school': self.school.id,
+            'term': self.term.id,
+            'subject': 'Django',
+            'duration': 45
+        }
+
+        serializer = CourseSerializer(data=data)
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('duration', serializer.errors)
+
+    def test_invalid_school_is_rejected(self):
+        data = {
+            'school': 99999,
+            'term': self.term.id,
+            'subject': 'Django',
+            'duration': 90
+        }
+
+        serializer = CourseSerializer(data=data)
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('school', serializer.errors)
+
+    def test_invalid_term_is_rejected(self):
+        data = {
+            'school': self.school.id,
+            'term': 99999,
+            'subject': 'Django',
+            'duration': 90
+        }
+
+        serializer = CourseSerializer(data=data)
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('term', serializer.errors)
