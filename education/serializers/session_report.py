@@ -48,9 +48,12 @@ class SessionReportSerializer(serializers.ModelSerializer):
                 'session': 'Session is required.'
             })
 
-        today = timezone.localdate()
+        if self.instance and 'session' in attrs and attrs['session'] != self.instance.session:
+                raise serializers.ValidationError({
+                    'session': 'Session cannot be changed after report creation.'
+                })
 
-        if session.date > today:
+        if session.date > timezone.localdate():
             raise serializers.ValidationError({
                 'session': 'You cannot submit a report for a future session.'
             })

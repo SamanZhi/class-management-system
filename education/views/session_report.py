@@ -4,7 +4,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from education.models import SessionReport
-from education.serializers.session_report import SessionReportSerializer, SessionReportReviewSerializer
+from education.serializers.session_report import (
+    SessionReportReviewSerializer,
+    SessionReportSerializer,
+)
 
 
 class SessionReportListCreateView(APIView):
