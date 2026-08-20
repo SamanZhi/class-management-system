@@ -1,11 +1,9 @@
 from datetime import date
 
 from django.test import TestCase
-from rest_framework.exceptions import ValidationError
 
 from education.models import Course, School, Session, Term
 from education.serializers.session import SessionSerializer
-
 
 
 class SessionSerializerTests(TestCase):
