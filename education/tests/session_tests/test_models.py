@@ -5,7 +5,6 @@ from django.test import TestCase
 from django.utils import timezone
 
 from education.models import Course, School, Session, Term
-from users.models import User
 
 
 class SessionModelTests(TestCase):
