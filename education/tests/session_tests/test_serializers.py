@@ -28,3 +28,74 @@ class SessionSerializerTests(TestCase):
             subject='Python',
             duration=90,
         )
+
+    def test_valid_session_data(self):
+        data = {
+            'course_obj': self.course.id,
+            'session_number': 1,
+            'date': '2026-09-05',
+        }
+
+        serializer = SessionSerializer(data=data)
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_session_before_term_is_invalid(self):
+        data = {
+            'course_obj': self.course.id,
+            'session_number': 1,
+            'date': '2026-08-31',
+        }
+
+        serializer = SessionSerializer(data=data)
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('date', serializer.errors)
+
+    def test_session_after_term_is_invalid(self):
+        data = {
+            'course_obj': self.course.id,
+            'session_number': 1,
+            'date': '2026-12-10',
+        }
+
+        serializer = SessionSerializer(data=data)
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('date', serializer.errors)
+
+    def test_duplicate_session_number_is_invalid(self):
+        Session.objects.create(
+            course_obj=self.course,
+            session_number=1,
+            date=date(2026, 9, 5),
+        )
+
+        data = {
+            'course_obj': self.course.id,
+            'session_number': 1,
+            'date': '2026-09-06',
+        }
+
+        serializer = SessionSerializer(data=data)
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('session_number', serializer.errors)
+
+    def test_duplicate_session_date_is_invalid(self):
+        Session.objects.create(
+            course_obj=self.course,
+            session_number=1,
+            date=date(2026, 9, 5),
+        )
+
+        data = {
+            'course_obj': self.course.id,
+            'session_number': 2,
+            'date': '2026-09-05',
+        }
+
+        serializer = SessionSerializer(data=data)
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('date', serializer.errors)
