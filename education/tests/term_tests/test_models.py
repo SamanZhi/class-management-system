@@ -8,14 +8,14 @@ from education.models import Term
 
 
 class TermModelTest(TestCase):
-    def create_term(self, start_date=date(2026, 9, 1), end_date=date(2026, 11, 31), term_type='regular'):
+    def create_term(self, start_date=date(2026, 9, 1), end_date=date(2026, 11, 30), term_type='regular'):
         return Term.objects.create(start_date=start_date, end_date=end_date, type=term_type)
 
     def test_create_term(self):
         term = self.create_term()
 
         self.assertEqual(term.start_date, date(2026, 9, 1))
-        self.assertEqual(term.end_date, date(2026, 11, 31))
+        self.assertEqual(term.end_date, date(2026, 11, 30))
         self.assertEqual(term.type, 'regular')
         self.assertFalse(term.is_deleted)
         self.assertIsNone(term.deleted_at)
@@ -24,7 +24,7 @@ class TermModelTest(TestCase):
     def test_str_returns_term_type_and_dates(self):
         term = self.create_term()
 
-        self.assertEqual(str(term), 'regular - (2026-09-01 to 2026-11-31)')
+        self.assertEqual(str(term), 'regular - (2026-09-01 to 2026-11-30)')
 
     def test_end_date_must_be_after_start_date(self):
         term = Term(start_date=date(2026, 11, 20), end_date=date(2026, 10, 10), type='regular')
@@ -33,7 +33,7 @@ class TermModelTest(TestCase):
             term.full_clean()
 
     def test_terms_cannot_overlap(self):
-        self.create_term(start_date=date(2026, 9, 1), end_date=date(2026, 11, 31))
+        self.create_term(start_date=date(2026, 9, 1), end_date=date(2026, 11, 30))
 
         overlapping_term = Term(start_date=date(2026, 9, 10), end_date=date(2026, 10, 31), type='regular')
 
@@ -41,7 +41,7 @@ class TermModelTest(TestCase):
             overlapping_term.full_clean()
 
     def test_term_ending_on_existing_start_date_cannot_overlap(self):
-        self.create_term(start_date=date(2026, 10, 1), end_date=date(2026, 11, 31))
+        self.create_term(start_date=date(2026, 10, 1), end_date=date(2026, 11, 30))
         
         overlapping_term = Term(start_date=date(2026, 9, 1), end_date=date(2026, 10, 1), type='regular')
 

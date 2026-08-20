@@ -14,7 +14,7 @@ class CourseModelTests(TestCase):
 
         self.term = Term.objects.create(
             start_date=date(2026, 9, 1),
-            end_date=date(2026, 11, 31),
+            end_date=date(2026, 11, 30),
             type='regular'
         )
 
@@ -42,7 +42,7 @@ class CourseModelTests(TestCase):
         self.assertIsNone(self.course.deleted_at)
 
     def test_str_returns_expected_value(self):
-        self.assertEqual(str(self.course), 'Python (90min) - regular - (2026-09-01 to 2026-11-31)')
+        self.assertEqual(str(self.course), 'Python (90min) - regular - (2026-09-01 to 2026-11-30)')
 
     def test_valid_course_durations(self):
         for duration in [60, 90, 120]:
