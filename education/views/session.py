@@ -47,3 +47,83 @@ class SessionListCreateView(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class SessionDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return Session.objects.select_related(
+                'course_obj',
+                'course_obj__school',
+                'course_obj__term'
+        ).get(pk=pk)
+        except Session.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        if request.user.role != 'education_officer':
+            return Response(
+                {'detail': 'Only education officers can access sessions.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        session = self.get_object(pk)
+
+        if session is None:
+            return Response(
+                {'detail': 'Session not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = SessionSerializer(session)
+
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        if request.user.role != 'education_officer':
+                return Response(
+                    {'detail': 'Only education officers can update sessions.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+       
+        session = self.get_object(pk)
+
+        if session is None:
+            return Response(
+                {'detail': 'Session not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = SessionSerializer(session, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return self.Response(serializer.data)
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    def delete(self, request, pk):
+        if request.user.role != 'education_officer':
+            return Response(
+                {'detail': 'Only education officers can delete sessions.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+               
+        session = self.get_object(pk)
+
+        if session is None:
+            return Response(
+                {'detail': 'Session not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        session.delete()
+
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )
