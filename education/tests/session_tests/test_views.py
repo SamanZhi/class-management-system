@@ -175,3 +175,165 @@ class SessionViewTests(APITestCase):
             response.status_code,
             status.HTTP_403_FORBIDDEN,
         )
+
+    def test_teacher_can_get_session_detail(self):
+        self.client.force_authenticate(
+            user=self.teacher
+        )
+
+        response = self.client.get(self.detail_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+    def test_education_officer_can_get_session_detail(self):
+        self.client.force_authenticate(
+            user=self.education_officer
+        )
+
+        response = self.client.get(self.detail_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        self.assertEqual(
+            response.data['id'],
+            self.session.id,
+        )
+
+    def test_finance_officer_can_get_session_detail(self):
+        self.client.force_authenticate(
+            user=self.finance_officer
+        )
+
+        response = self.client.get(self.detail_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+    def test_teacher_cannot_update_session(self):
+        self.client.force_authenticate(
+            user=self.teacher
+        )
+
+        data = {
+            'course_obj': self.course.id,
+            'session_number': 1,
+            'date': '2026-09-06',
+        }
+
+        response = self.client.put(
+            self.detail_url,
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_education_officer_can_update_session(self):
+        self.client.force_authenticate(
+            user=self.education_officer
+        )
+
+        data = {
+            'course_obj': self.course.id,
+            'session_number': 1,
+            'date': '2026-09-06',
+        }
+
+        response = self.client.put(
+            self.detail_url,
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        self.session.refresh_from_db()
+
+        self.assertEqual(
+            self.session.date,
+            date(2026, 9, 6),
+        )
+
+    def test_finance_officer_cannot_update_session(self):
+        self.client.force_authenticate(
+            user=self.finance_officer
+        )
+
+        data = {
+            'course_obj': self.course.id,
+            'session_number': 1,
+            'date': '2026-09-06',
+        }
+
+        response = self.client.put(
+            self.detail_url,
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_teacher_cannot_delete_session(self):
+        self.client.force_authenticate(
+            user=self.teacher
+        )
+
+        response = self.client.delete(
+            self.detail_url
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_education_officer_can_delete_session(self):
+        self.client.force_authenticate(
+            user=self.education_officer
+        )
+
+        response = self.client.delete(
+            self.detail_url
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_204_NO_CONTENT,
+        )
+
+        self.session.refresh_from_db()
+
+        self.assertTrue(
+            self.session.is_deleted
+        )
+
+    def test_finance_officer_cannot_delete_session(self):
+        self.client.force_authenticate(
+            user=self.finance_officer
+        )
+
+        response = self.client.delete(
+            self.detail_url
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
