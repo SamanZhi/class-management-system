@@ -1,0 +1,80 @@
+from django.db import models
+from django.utils import timezone
+from rest_framework import serializers
+
+from education.models import CourseTeacher, SessionReport
+
+
+class SessionReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SessionReport
+        fields = [
+            'id',
+            'session',
+            'summary',
+            'present_count',
+            'absent_count',
+            'status',
+            'rejection_reason',
+            'teacher',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = [
+            'id',
+            'teacher',
+            'status',
+            'rejection_reason',
+            'created_app',
+            'updated_at'
+        ]
+
+    def validate(self, attrs):
+        request = self.context.get('request')
+        teacher = request.user if request else None
+
+        session = attrs.get(
+            'session',
+            getattr(self.instance, 'session', None)
+        )
+
+        if not teacher or not teacher.is_authenticated:
+            raise serializers.ValidationError(
+                'Authentication is required.'
+            )
+
+        if not session:
+            raise serializers.ValidationError({
+                'session': 'Session is required.'
+            })
+
+        today = timezone.localdate()
+
+        if session.date > today:
+            raise serializers.ValidationError({
+                'session': 'You cannot submit a report for a future session.'
+            })
+
+        if (self.instance and self.instance.status == SessionReport.Status.APPROVED):
+            raise serializers.ValidationError(
+                'Approved reports cannot be edited.'
+            )
+
+        is_responsible = CourseTeacher.objects.filter(
+            course_obj=session.course_obj,
+            teacher=teacher,
+            start_date__lte=session.date,
+        ).filter(
+            models.Q(end_date__isnull=True) |
+            models.Q(end_date__gte=session.date)
+        ).exists()
+
+        if not is_responsible:
+            raise serializers.ValidationError({
+                'session': (
+                    'You were not responsible for this course '
+                    'on the session date.'
+                )
+            })
+
+        return attrs
