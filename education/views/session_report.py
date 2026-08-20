@@ -59,3 +59,84 @@ class SessionReportListCreateView(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class SessionReportDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return SessionReport.objects.select_related(
+                'session',
+                'session__course_obj',
+                'session__course_obj__school',
+                'session_course_obj__term',
+                'teacher',
+                'reviewed_by'
+        ).get(pk=pk)
+        except SessionReport.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        if request.user.role != 'teacher':
+            return Response(
+                {'detail': 'Only teachers can access sessions reports.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        report = self.get_object(pk)
+
+        if report is None:
+            return Response(
+                {'detail': 'Session report not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if report.teacher != request.user:
+            return Response(
+                {'detail': 'You cannot access this report.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = SessionReportSerializer(report)
+
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        if request.user.role != 'teacher':
+                return Response(
+                    {'detail': 'Only teachers can update sessions.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        
+        report = self.get_object(pk)
+
+        if report is None:
+            return Response(
+                {'detail': 'Session report not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if report.teacher != request.user:
+            return Response(
+                {'detail': 'You cannot edit this report.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = SessionReportSerializer(
+            report, 
+            data=request.data, 
+            context={'request': request}
+        )
+
+        if serializer.is_valid():
+            serializer.save(
+                teacher=request.user
+            )
+
+            return Response(serializer.data)
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
