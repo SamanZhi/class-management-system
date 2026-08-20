@@ -87,3 +87,60 @@ class SessionReportModelTests(TestCase):
                 present_count=10,
                 absent_count=5,
             )
+
+    def test_is_late_is_false_before_48_hours(self):
+        report = self.create_report()
+
+        updated_at = datetime(2026, 9, 6, 12, 0)
+
+        with patch.object(
+            SessionReport,
+            'updated_at',
+            updated_at,
+        ):
+            self.assertFalse(report.is_late)
+
+    def test_is_late_is_false_at_exactly_48_hours(self):
+        report = self.create_report()
+
+        updated_at = datetime(2026, 9, 7, 0, 0)
+
+        with patch.object(
+            SessionReport,
+            'updated_at',
+            updated_at,
+        ):
+            self.assertFalse(report.is_late)
+
+    def test_is_late_is_true_after_48_hours(self):
+        report = self.create_report()
+
+        updated_at = datetime(2026, 9, 7, 0, 1)
+
+        with patch.object(
+            SessionReport,
+            'updated_at',
+            updated_at,
+        ):
+            self.assertTrue(report.is_late)
+
+    def test_is_late_is_recalculated_after_report_update(self):
+        report = self.create_report()
+
+        first_updated_at = datetime(2026, 9, 5, 12, 0)
+
+        with patch.object(
+            SessionReport,
+            'updated_at',
+            first_updated_at,
+        ):
+            self.assertFalse(report.is_late)
+
+        second_updated_at = datetime(2026, 9, 7, 0, 1)
+
+        with patch.object(
+            SessionReport,
+            'updated_at',
+            second_updated_at,
+        ):
+            self.assertTrue(report.is_late)
