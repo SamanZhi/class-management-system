@@ -10,13 +10,24 @@ class Session(BaseModel, SoftDeleteModel):
     date = models.DateField()
 
     class Meta:
-        unique_together = ('course_obj', 'session_number')
+        constraints = [
+            models.UniqueConstraint(
+                field=['course_obj', 'session_number'],
+            )
+        ]
 
     def clean(self):
+        super().clean()
+
         term = self.course_obj.term
-        if not (term.start_date <= self.date <= term.end_data):
-            raise ValidationError("تاریخ جلسه باید داخل بازه‌ی ترم باشد.")
+
+        if not (term.start_date <= self.date <= term.end_date):
+            raise ValidationError("Session date must be within the term date range.")
 
         clash = Session.objects.filter(course_obj=self.course_obj, date=self.date).exclude(pk=self.pk)
+        
         if clash.exists():
-            raise ValidationError("در این تاریخ قبلاً برای این کلاس جلسه ثبت شده است.")
+            raise ValidationError("A session already exists for this course on this date.")
+
+    def __str__(self):
+        return f"{self.course_obj} - Session {self.session_number}"
