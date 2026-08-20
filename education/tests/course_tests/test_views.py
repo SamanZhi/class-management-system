@@ -1,12 +1,10 @@
 from datetime import date
 
 from django.urls import reverse
-from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from education.models import Course, CourseTeacher, School, Term
-
 from users.models import User
 
 
