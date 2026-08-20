@@ -99,3 +99,32 @@ class SessionSerializerTests(TestCase):
 
         self.assertFalse(serializer.is_valid())
         self.assertIn('date', serializer.errors)
+
+    def test_required_fields_are_required(self):
+        serializer = SessionSerializer(data={})
+
+        self.assertFalse(serializer.is_valid())
+
+        self.assertIn('course_obj', serializer.errors)
+        self.assertIn('session_number', serializer.errors)
+        self.assertIn('date', serializer.errors)
+
+    def test_updating_existing_session_does_not_conflict_with_itself(self):
+        session = Session.objects.create(
+            course_obj=self.course,
+            session_number=1,
+            date=date(2026, 9, 5),
+        )
+
+        data = {
+            'course_obj': self.course.id,
+            'session_number': 1,
+            'date': '2026-09-05',
+        }
+
+        serializer = SessionSerializer(
+            session,
+            data=data,
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
