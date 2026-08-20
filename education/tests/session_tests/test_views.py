@@ -10,7 +10,6 @@ from users.models import User
 
 
 class SessionViewTests(APITestCase):
-
     def setUp(self):
         self.school = School.objects.create(
             name='School A',
@@ -65,4 +64,114 @@ class SessionViewTests(APITestCase):
         self.detail_url = reverse(
             'session-detail',
             kwargs={'pk': self.session.pk},
+        )
+
+    def test_teacher_can_list_sessions(self):
+        self.client.force_authenticate(
+            user=self.teacher
+        )
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+    def test_education_officer_can_list_sessions(self):
+        self.client.force_authenticate(
+            user=self.education_officer
+        )
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+
+    def test_finance_officer_can_list_sessions(self):
+        self.client.force_authenticate(
+            user=self.finance_officer
+        )
+
+        response = self.client.get(self.list_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+    def test_teacher_cannot_create_session(self):
+        self.client.force_authenticate(
+            user=self.teacher
+        )
+
+        data = {
+            'course_obj': self.course.id,
+            'session_number': 2,
+            'date': '2026-09-06',
+        }
+
+        response = self.client.post(
+            self.list_url,
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_education_officer_can_create_session(self):
+        self.client.force_authenticate(
+            user=self.education_officer
+        )
+
+        data = {
+            'course_obj': self.course.id,
+            'session_number': 2,
+            'date': '2026-09-06',
+        }
+
+        response = self.client.post(
+            self.list_url,
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+        )
+
+        self.assertTrue(
+            Session.objects.filter(
+                course_obj=self.course,
+                session_number=2,
+            ).exists()
+        )
+
+    def test_finance_officer_cannot_create_session(self):
+        self.client.force_authenticate(
+            user=self.finance_officer
+        )
+
+        data = {
+            'course_obj': self.course.id,
+            'session_number': 2,
+            'date': '2026-09-06',
+        }
+
+        response = self.client.post(
+            self.list_url,
+            data,
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
         )
