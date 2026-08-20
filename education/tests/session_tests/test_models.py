@@ -130,3 +130,45 @@ class SessionModelTests(TestCase):
         )
 
         session2.full_clean()
+
+    def test_soft_delete_sets_deleted_fields(self):
+        session = Session.objects.create(
+            course_obj=self.course,
+            session_number=1,
+            date=date(2026, 9, 5),
+        )
+
+        before = timezone.now()
+
+        session.soft_delete()
+        session.refresh_from_db()
+
+        self.assertTrue(session.is_deleted)
+        self.assertIsNotNone(session.deleted_at)
+        self.assertGreaterEqual(session.deleted_at, before)
+
+    def test_soft_deleted_session_is_excluded_from_default_manager(self):
+        session = Session.objects.create(
+            course_obj=self.course,
+            session_number=1,
+            date=date(2026, 9, 5),
+        )
+
+        session.soft_delete()
+
+        self.assertFalse(
+            Session.objects.filter(pk=session.pk).exists()
+        )
+
+    def test_soft_deleted_session_is_visible_in_all_objects(self):
+        session = Session.objects.create(
+            course_obj=self.course,
+            session_number=1,
+            date=date(2026, 9, 5),
+        )
+
+        session.soft_delete()
+
+        self.assertTrue(
+            Session.all_objects.filter(pk=session.pk).exists()
+        )
