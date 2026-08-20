@@ -12,7 +12,8 @@ class Session(BaseModel, SoftDeleteModel):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                field=['course_obj', 'session_number'],
+                fields=['course_obj', 'session_number'],
+                name='unique_session_number_per_course'
             )
         ]
 

@@ -12,8 +12,8 @@ class SchoolAdmin(admin.ModelAdmin):
 
 @admin.register(Term)
 class TermAdmin(admin.ModelAdmin):
-    list_display = ('id', 'start_date', 'end_date', 'term_type',)
-    list_filter = ('term_type',)
+    list_display = ('id', 'start_date', 'end_date', 'type',)
+    list_filter = ('type',)
     ordering = ('-start_date',)
 
 @admin.register(Course)
@@ -25,7 +25,7 @@ class CourseAdmin(admin.ModelAdmin):
 
 @admin.register(CourseTeacher)
 class CourseTeacherAdmin(admin.ModelAdmin):
-    list_display = ('id', 'course_object', 'teacher', 'start_date', 'end_date',)
+    list_display = ('id', 'course_obj', 'teacher', 'start_date', 'end_date',)
     list_filter = ('teacher', 'start_date', 'end_date',)
     search_fields = ('teacher__username', 'teacher__first_name', 'teacher__last_name', 'course_obj__subject',)
     ordering = ('-start_date',)
