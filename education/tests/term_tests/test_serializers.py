@@ -7,7 +7,7 @@ from education.serializers import TermSerializer
 
 
 class TermSerializerTests(TestCase):
-    def create_term(self, start_date=date(2026, 9, 1), end_date=date(2026, 11, 31), term_type='regular'):
+    def create_term(self, start_date=date(2026, 9, 1), end_date=date(2026, 11, 30), term_type='regular'):
         return Term.objects.create(start_date=start_date, end_date=end_date, type=term_type)
 
     def test_serialized_fields(self):
@@ -46,7 +46,7 @@ class TermSerializerTests(TestCase):
     def test_valid_term_data(self):
         data = {
             'start_date': '2026-09-01',
-            'end_date': '2026-11-31',
+            'end_date': '2026-11-30',
             'type': 'regular'
         }
 

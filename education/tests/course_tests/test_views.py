@@ -14,7 +14,7 @@ class CourseViewTests(APITestCase):
 
         self.term = Term.objects.create(
             start_date=date(2026, 9, 1),
-            end_date=date(2026, 11, 31),
+            end_date=date(2026, 11, 30),
             type='regular'
         )
 
@@ -346,7 +346,7 @@ class CourseTeacherViewTests(APITestCase):
 
         self.term = Term.objects.create(
             start_date=date(2026, 9, 1),
-            end_date=date(2026, 11, 31),
+            end_date=date(2026, 11, 30),
             type='regular'
         )
         

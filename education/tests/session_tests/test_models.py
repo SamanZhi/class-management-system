@@ -12,13 +12,13 @@ class SessionModelTests(TestCase):
 
     def setUp(self):
         self.school = School.objects.create(
-            name='Test School',
-            address='Test Address',
+            name='School A',
+            address='Address A',
         )
 
         self.term = Term.objects.create(
             start_date=date(2026, 9, 1),
-            end_date=date(2026, 12, 20),
+            end_date=date(2026, 11, 30),
             type='regular',
         )
 
@@ -28,3 +28,105 @@ class SessionModelTests(TestCase):
             subject='Python',
             duration=90,
         )
+
+    def test_create_session(self):
+        session = Session.objects.create(
+            course_obj=self.course,
+            session_number=1,
+            date=date(2026, 9, 5),
+        )
+
+        self.assertEqual(session.course_obj, self.course)
+        self.assertEqual(session.session_number, 1)
+        self.assertEqual(session.date, date(2026, 9, 5))
+        self.assertFalse(session.is_deleted)
+        self.assertIsNone(session.deleted_at)
+
+    def test_session_date_must_be_inside_term(self):
+        session = Session(
+            course_obj=self.course,
+            session_number=1,
+            date=date(2026, 8, 31),
+        )
+
+        with self.assertRaises(ValidationError):
+            session.full_clean()
+
+    def test_session_date_cannot_be_after_term(self):
+            session = Session(
+                course_obj=self.course,
+                session_number=1,
+                date=date(2026, 12, 10),
+            )
+
+            with self.assertRaises(ValidationError):
+                session.full_clean()
+
+    def test_session_number_must_be_unique_for_course(self):
+        Session.objects.create(
+            course_obj=self.course,
+            session_number=1,
+            date=date(2026, 9, 5),
+        )
+
+        duplicate = Session(
+            course_obj=self.course,
+            session_number=1,
+            date=date(2026, 9, 6),
+        )
+
+        with self.assertRaises(ValidationError):
+            duplicate.full_clean()
+
+    def test_same_session_number_is_allowed_for_different_courses(self):
+        course2 = Course.objects.create(
+            school=self.school,
+            term=self.term,
+            subject='Django',
+            duration=120,
+        )
+
+        Session.objects.create(
+            course_obj=self.course,
+            session_number=1,
+            date=date(2026, 9, 5),
+        )
+
+        session2 = Session(
+            course_obj=course2,
+            session_number=1,
+            date=date(2026, 9, 5),
+        )
+
+        session2.full_clean()
+
+    def test_two_sessions_of_same_course_cannot_have_same_date(self):
+        Session.objects.create(
+            course_obj=self.course,
+            session_number=1,
+            date=date(2026, 9, 5),
+        )
+
+        duplicate = Session(
+            course_obj=self.course,
+            session_number=2,
+            date=date(2026, 9, 5),
+        )
+
+        with self.assertRaises(ValidationError):
+            duplicate.full_clean()
+
+    def test_same_course_can_have_sessions_on_different_dates(self):
+        Session.objects.create(
+            course_obj=self.course,
+            session_number=1,
+            date=date(2026, 9, 5),
+        )
+
+        session2 = Session(
+            course_obj=self.course,
+            session_number=2,
+            date=date(2026, 9, 6),
+        )
+
+        session2.full_clean()
