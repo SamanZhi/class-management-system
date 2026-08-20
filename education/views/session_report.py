@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from education.models import SessionReport
-from education.serializers.session_report import SessionReportSerializer
+from education.serializers.session_report import SessionReportSerializer, SessionReportReviewSerializer
 
 
 class SessionReportListCreateView(APIView):
@@ -132,6 +132,54 @@ class SessionReportDetailView(APIView):
         if serializer.is_valid():
             serializer.save(
                 teacher=request.user
+            )
+
+            return Response(serializer.data)
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class SessionReportReviewView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return SessionReport.objects.select_related(
+                'session',
+                'session__course_obj',
+                'teacher',
+                'reviewed_by'
+        ).get(pk=pk)
+        except SessionReport.DoesNotExist:
+            return None
+
+    def patch(self, request, pk):
+        if request.user.role != 'education_officer':
+                return Response(
+                    {'detail': 'Only education officers can review reports.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        
+        report = self.get_object(pk)
+        
+        if report is None:
+            return Response(
+                {'detail': 'Session report not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = SessionReportReviewSerializer(
+            report,
+            data=request.data,
+            partial=True
+        )
+
+        if serializer.is_valid():
+            serializer.save(
+                reviewed_by=request.user
             )
 
             return Response(serializer.data)

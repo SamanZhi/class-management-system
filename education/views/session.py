@@ -38,7 +38,7 @@ class SessionListCreateView(APIView):
 
         if serializer.is_valid():
             serializer.save()
-            return self.Response(
+            return Response(
                 serializer.data,
                 status=status.HTTP_201_CREATED
             )
@@ -100,7 +100,7 @@ class SessionDetailView(APIView):
 
         if serializer.is_valid():
             serializer.save()
-            return self.Response(serializer.data)
+            return Response(serializer.data)
 
         return Response(
             serializer.errors,
