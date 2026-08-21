@@ -74,3 +74,47 @@ class SessionReportViewTests(APITestCase):
         )
 
         self.list_url = '/session-reports/'
+
+    def create_report(self):
+        return SessionReport.objects.create(
+            session=self.session,
+            teacher=self.teacher,
+            summary='Original summary',
+            present_count=15,
+            absent_count=2,
+        )
+
+    def test_teacher_can_create_report(self):
+        self.client.force_authenticate(
+            user=self.teacher
+        )
+
+        response = self.client.post(
+            self.list_url,
+            {
+                'session': self.session.id,
+                'summary': 'Today we covered Python.',
+                'present_count': 15,
+                'absent_count': 2,
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+        )
+
+        report = SessionReport.objects.get(
+            session=self.session
+        )
+
+        self.assertEqual(
+            report.teacher,
+            self.teacher,
+        )
+
+        self.assertEqual(
+            report.status,
+            SessionReport.Status.PENDING,
+        )
