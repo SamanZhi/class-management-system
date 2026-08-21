@@ -332,3 +332,44 @@ class SessionReportReviewSerializerTests(TestCase):
             'rejection_reason',
             serializer.errors,
         )
+
+    def test_pending_status_cannot_be_used_for_review(self):
+        serializer = SessionReportReviewSerializer(
+            self.report,
+            data={
+                'status': SessionReport.Status.PENDING,
+            },
+            partial=True,
+        )
+
+        self.assertFalse(serializer.is_valid())
+
+    def test_approved_report_cannot_be_reviewed_again(self):
+        self.report.status = SessionReport.Status.APPROVED
+        self.report.save()
+
+        serializer = SessionReportReviewSerializer(
+            self.report,
+            data={
+                'status': SessionReport.Status.REJECTED,
+                'rejection_reason': 'Invalid.',
+            },
+            partial=True,
+        )
+
+        self.assertFalse(serializer.is_valid())
+
+    def test_rejected_report_cannot_be_reviewed_again(self):
+        self.report.status = SessionReport.Status.REJECTED
+        self.report.rejection_reason = 'Needs correction.'
+        self.report.save()
+
+        serializer = SessionReportReviewSerializer(
+            self.report,
+            data={
+                'status': SessionReport.Status.APPROVED,
+            },
+            partial=True,
+        )
+
+        self.assertFalse(serializer.is_valid())
