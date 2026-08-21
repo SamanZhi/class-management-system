@@ -122,7 +122,7 @@ class SessionDetailView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        session.delete()
+        session.soft_delete()
 
         return Response(
             status=status.HTTP_204_NO_CONTENT

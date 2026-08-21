@@ -78,7 +78,10 @@ class SessionSerializerTests(TestCase):
         serializer = SessionSerializer(data=data)
 
         self.assertFalse(serializer.is_valid())
-        self.assertIn('session_number', serializer.errors)
+        self.assertIn(
+            'non_field_errors',
+            serializer.errors,
+        )
 
     def test_duplicate_session_date_is_invalid(self):
         Session.objects.create(

@@ -28,5 +28,5 @@ urlpatterns = [
     path('sessions/<int:pk>/', SessionDetailView.as_view(), name='session-detail'),
     path('session-reports/', SessionReportListCreateView.as_view(), name='session-report-list'),
     path('session-reports<int:pk>/', SessionReportDetailView.as_view(), name='session-report-detail'),
-    path('session-reports/<int:pk>/review/', SessionReportReviewSerializer.as_view(), name='session-report-review')
+    path('session-reports/<int:pk>/review/', SessionReportReviewSerializer, name='session-report-review')
 ]

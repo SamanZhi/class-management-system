@@ -52,14 +52,14 @@ class SessionModelTests(TestCase):
             session.full_clean()
 
     def test_session_date_cannot_be_after_term(self):
-            session = Session(
-                course_obj=self.course,
-                session_number=1,
-                date=date(2026, 12, 10),
-            )
+        session = Session(
+            course_obj=self.course,
+            session_number=1,
+            date=date(2026, 12, 10),
+        )
 
-            with self.assertRaises(ValidationError):
-                session.full_clean()
+        with self.assertRaises(ValidationError):
+            session.full_clean()
 
     def test_session_number_must_be_unique_for_course(self):
         Session.objects.create(
