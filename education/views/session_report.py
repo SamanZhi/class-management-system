@@ -73,7 +73,7 @@ class SessionReportDetailView(APIView):
                 'session',
                 'session__course_obj',
                 'session__course_obj__school',
-                'session_course_obj__term',
+                'session__course_obj__term',
                 'teacher',
                 'reviewed_by'
         ).get(pk=pk)
@@ -107,11 +107,11 @@ class SessionReportDetailView(APIView):
 
     def put(self, request, pk):
         if request.user.role != 'teacher':
-                return Response(
-                    {'detail': 'Only teachers can update sessions.'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-        
+            return Response(
+                {'detail': 'Only teachers can update sessions.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         report = self.get_object(pk)
 
         if report is None:
@@ -126,24 +126,37 @@ class SessionReportDetailView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
+        if report.status == SessionReport.Status.APPROVED:
+            return Response(
+                {'detail': 'Approved reports cannot be edited.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         serializer = SessionReportSerializer(
-            report, 
-            data=request.data, 
+            report,
+            data=request.data,
             context={'request': request}
         )
 
         if serializer.is_valid():
-            serializer.save(
-                teacher=request.user
-            )
+            if report.status == SessionReport.Status.REJECTED:
+                serializer.save(
+                    teacher=request.user,
+                    status=SessionReport.Status.PENDING,
+                    rejection_reason='',
+                    reviewed_by=None,
+                )
+            else:
+                serializer.save(
+                    teacher=request.user,
+                )
 
             return Response(serializer.data)
 
         return Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
-        )
-
+    )
 
 class SessionReportReviewView(APIView):
     permission_classes = [IsAuthenticated]
