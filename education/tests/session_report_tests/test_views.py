@@ -360,3 +360,54 @@ class SessionReportViewTests(APITestCase):
             response.status_code,
             status.HTTP_400_BAD_REQUEST,
         )
+
+    def test_education_officer_cannot_change_report_content(self):
+        report = self.create_report()
+
+        original_summary = report.summary
+        original_present = report.present_count
+        original_absent = report.absent_count
+
+        url = f'/session-reports/{report.id}/review/'
+
+        self.client.force_authenticate(
+            user=self.education_officer
+        )
+
+        response = self.client.patch(
+            url,
+            {
+                'status': SessionReport.Status.APPROVED,
+                'summary': 'HACKED',
+                'present_count': 999,
+                'absent_count': 0,
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        report.refresh_from_db()
+
+        self.assertEqual(
+            report.summary,
+            original_summary,
+        )
+
+        self.assertEqual(
+            report.present_count,
+            original_present,
+        )
+
+        self.assertEqual(
+            report.absent_count,
+            original_absent,
+        )
+
+        self.assertEqual(
+            report.status,
+            SessionReport.Status.APPROVED,
+        )
