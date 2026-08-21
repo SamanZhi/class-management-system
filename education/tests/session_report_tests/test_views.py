@@ -118,3 +118,121 @@ class SessionReportViewTests(APITestCase):
             report.status,
             SessionReport.Status.PENDING,
         )
+
+    def test_teacher_can_only_see_own_reports(self):
+        own_report = self.create_report()
+
+        other_session = Session.objects.create(
+            course_obj=self.course,
+            session_number=2,
+            date=date(2026, 9, 6),
+        )
+
+        SessionReport.objects.create(
+            session=other_session,
+            teacher=self.other_teacher,
+            summary='Other teacher report',
+            present_count=10,
+            absent_count=5,
+        )
+
+        self.client.force_authenticate(
+            user=self.teacher
+        )
+
+        response = self.client.get(
+            self.list_url
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        self.assertEqual(
+            len(response.data),
+            1,
+        )
+
+        self.assertEqual(
+            response.data[0]['id'],
+            own_report.id,
+        )
+
+    def test_teacher_cannot_edit_another_teachers_report(self):
+        other_report = SessionReport.objects.create(
+            session=self.session,
+            teacher=self.other_teacher,
+            summary='Other report',
+            present_count=10,
+            absent_count=5,
+        )
+
+        url = f'/session-reports/{other_report.id}/'
+
+        self.client.force_authenticate(
+            user=self.teacher
+        )
+
+        response = self.client.put(
+            url,
+            {
+                'summary': 'Hacked report',
+                'present_count': 100,
+                'absent_count': 0,
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_teacher_cannot_submit_future_session_report(self):
+        future_session = Session.objects.create(
+            course_obj=self.course,
+            session_number=2,
+            date=date(2099, 1, 1),
+        )
+
+        self.client.force_authenticate(
+            user=self.teacher
+        )
+
+        response = self.client.post(
+            self.list_url,
+            {
+                'session': future_session.id,
+                'summary': 'Future report',
+                'present_count': 10,
+                'absent_count': 0,
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    def test_unassigned_teacher_cannot_submit_report(self):
+        self.client.force_authenticate(
+            user=self.other_teacher
+        )
+
+        response = self.client.post(
+            self.list_url,
+            {
+                'session': self.session.id,
+                'summary': 'Unauthorized report',
+                'present_count': 10,
+                'absent_count': 0,
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
