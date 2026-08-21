@@ -294,3 +294,41 @@ class SessionReportReviewSerializerTests(TestCase):
             present_count=15,
             absent_count=2,
         )
+
+    def test_approve_is_valid(self):
+        serializer = SessionReportReviewSerializer(
+            self.report,
+            data={
+                'status': SessionReport.Status.APPROVED,
+            },
+            partial=True,
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_reject_with_reason_is_valid(self):
+        serializer = SessionReportReviewSerializer(
+            self.report,
+            data={
+                'status': SessionReport.Status.REJECTED,
+                'rejection_reason': 'Attendance count is incorrect.',
+            },
+            partial=True,
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_reject_without_reason_is_invalid(self):
+        serializer = SessionReportReviewSerializer(
+            self.report,
+            data={
+                'status': SessionReport.Status.REJECTED,
+            },
+            partial=True,
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn(
+            'rejection_reason',
+            serializer.errors,
+        )
