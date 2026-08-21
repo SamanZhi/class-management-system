@@ -65,7 +65,7 @@ class SessionViewTests(APITestCase):
             kwargs={'pk': self.session.pk},
         )
 
-    def test_teacher_can_list_sessions(self):
+    def test_teacher_cannot_list_sessions(self):
         self.client.force_authenticate(
             user=self.teacher
         )
@@ -74,7 +74,7 @@ class SessionViewTests(APITestCase):
 
         self.assertEqual(
             response.status_code,
-            status.HTTP_200_OK,
+            status.HTTP_403_FORBIDDEN,
         )
 
     def test_education_officer_can_list_sessions(self):
@@ -90,7 +90,7 @@ class SessionViewTests(APITestCase):
         )
 
 
-    def test_finance_officer_can_list_sessions(self):
+    def test_finance_officer_cannot_list_sessions(self):
         self.client.force_authenticate(
             user=self.finance_officer
         )
@@ -99,7 +99,7 @@ class SessionViewTests(APITestCase):
 
         self.assertEqual(
             response.status_code,
-            status.HTTP_200_OK,
+            status.HTTP_403_FORBIDDEN,
         )
 
     def test_teacher_cannot_create_session(self):
@@ -175,7 +175,7 @@ class SessionViewTests(APITestCase):
             status.HTTP_403_FORBIDDEN,
         )
 
-    def test_teacher_can_get_session_detail(self):
+    def test_teacher_cannot_get_session_detail(self):
         self.client.force_authenticate(
             user=self.teacher
         )
@@ -184,7 +184,7 @@ class SessionViewTests(APITestCase):
 
         self.assertEqual(
             response.status_code,
-            status.HTTP_200_OK,
+            status.HTTP_403_FORBIDDEN,
         )
 
     def test_education_officer_can_get_session_detail(self):
@@ -204,7 +204,7 @@ class SessionViewTests(APITestCase):
             self.session.id,
         )
 
-    def test_finance_officer_can_get_session_detail(self):
+    def test_finance_officer_cannot_get_session_detail(self):
         self.client.force_authenticate(
             user=self.finance_officer
         )
@@ -213,7 +213,7 @@ class SessionViewTests(APITestCase):
 
         self.assertEqual(
             response.status_code,
-            status.HTTP_200_OK,
+            status.HTTP_403_FORBIDDEN,
         )
 
     def test_teacher_cannot_update_session(self):
