@@ -81,3 +81,37 @@ class SessionReportSerializerTests(TestCase):
         request.user = user
 
         return {'request': request}
+
+    def valid_data(self):
+        return {
+            'session': self.session.id,
+            'summary': 'Students completed the lesson.',
+            'present_count': 15,
+            'absent_count': 2,
+        }
+
+    def test_valid_report_data(self):
+        serializer = SessionReportSerializer(
+            data=self.valid_data(),
+            context=self.get_context(self.teacher),
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_future_session_is_invalid(self):
+        future_session = Session.objects.create(
+            course_obj=self.course,
+            session_number=2,
+            date=date(2099, 1, 1),
+        )
+
+        data = self.valid_data()
+        data['session'] = future_session.id
+
+        serializer = SessionReportSerializer(
+            data=data,
+            context=self.get_context(self.teacher),
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('session', serializer.errors)
