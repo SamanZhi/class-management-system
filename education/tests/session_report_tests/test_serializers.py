@@ -1,6 +1,8 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.test import TestCase
+from django.utils import timezone
+from rest_framework.test import APIRequestFactory
 
 from education.models import (
     Course,
@@ -20,14 +22,18 @@ from users.models import User
 class SessionReportSerializerTests(TestCase):
 
     def setUp(self):
+        self.factory = APIRequestFactory()
+        
         self.school = School.objects.create(
             name='School A',
             address='Address A',
         )
 
+        session_date = timezone.localdate() - timedelta(days=1)
+
         self.term = Term.objects.create(
-            start_date=date(2026, 9, 1),
-            end_date=date(2026, 11, 30),
+            start_date=session_date - timedelta(days=30),
+            end_date=session_date + timedelta(days=60),
             type='regular',
         )
 
@@ -65,18 +71,18 @@ class SessionReportSerializerTests(TestCase):
         self.session = Session.objects.create(
             course_obj=self.course,
             session_number=1,
-            date=date(2026, 9, 5),
+            date=session_date,
         )
 
         CourseTeacher.objects.create(
             course_obj=self.course,
             teacher=self.teacher,
-            start_date=date(2026, 9, 1),
-            end_date=date(2026, 11, 30),
+            start_date=session_date - timedelta(days=10),
+            end_date=session_date + timedelta(days=30),
         )
 
     def get_context(self, user):
-        request = self.factory.post('/session-reports/')
+        request = self.factory.post('/api/education/session-reports/')
         request.user = user
 
         return {'request': request}
@@ -149,7 +155,7 @@ class SessionReportSerializerTests(TestCase):
             course_obj=self.course,
             teacher=self.teacher,
         ).update(
-            end_date=date(2026, 9, 4),
+            end_date=date(2026, 8, 19),
         )
 
         serializer = SessionReportSerializer(

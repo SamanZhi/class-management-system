@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -15,16 +15,17 @@ from users.models import User
 
 
 class SessionReportViewTests(APITestCase):
-
     def setUp(self):
         self.school = School.objects.create(
             name='School A',
             address='Address A',
         )
 
+        session_date = date.today() - timedelta(days=1)
+
         self.term = Term.objects.create(
-            start_date=date(2026, 9, 1),
-            end_date=date(2026, 11, 30),
+            start_date=session_date - timedelta(days=30),
+            end_date=session_date + timedelta(days=60),
             type='regular',
         )
 
@@ -62,17 +63,17 @@ class SessionReportViewTests(APITestCase):
         self.session = Session.objects.create(
             course_obj=self.course,
             session_number=1,
-            date=date(2026, 9, 5),
+            date=session_date,
         )
 
         CourseTeacher.objects.create(
             course_obj=self.course,
             teacher=self.teacher,
-            start_date=date(2026, 9, 1),
-            end_date=date(2026, 11, 30),
+            start_date=session_date - timedelta(days=10),
+            end_date=session_date + timedelta(days=30),
         )
 
-        self.list_url = '/session-reports/'
+        self.list_url = '/api/education/session-reports/'
 
     def create_report(self):
         return SessionReport.objects.create(
@@ -157,6 +158,28 @@ class SessionReportViewTests(APITestCase):
             response.data[0]['id'],
             own_report.id,
         )
+        
+    def test_teacher_cannot_view_another_teachers_report(self):
+        report = SessionReport.objects.create(
+            session=self.session,
+            teacher=self.teacher2,
+            summary='Other report',
+            present_count=10,
+            absent_count=5,
+        )
+
+        url = f'/api/education/session-reports/{report.id}/'
+
+        self.client.force_authenticate(
+            user=self.teacher
+        )
+
+        response = self.client.get(url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
 
     def test_teacher_cannot_edit_another_teachers_report(self):
         report2 = SessionReport.objects.create(
@@ -167,7 +190,7 @@ class SessionReportViewTests(APITestCase):
             absent_count=5,
         )
 
-        url = f'/session-reports/{report2.id}/'
+        url = f'/api/education/session-reports/{report2.id}/'
 
         self.client.force_authenticate(
             user=self.teacher
@@ -239,7 +262,7 @@ class SessionReportViewTests(APITestCase):
     def test_teacher_cannot_review_own_report(self):
         report = self.create_report()
 
-        url = f'/session-reports/{report.id}/review/'
+        url = f'/api/education/session-reports/{report.id}/review/'
 
         self.client.force_authenticate(
             user=self.teacher
@@ -261,7 +284,7 @@ class SessionReportViewTests(APITestCase):
     def test_education_officer_can_approve_report(self):
         report = self.create_report()
 
-        url = f'/session-reports/{report.id}/review/'
+        url = f'/api/education/session-reports/{report.id}/review/'
 
         self.client.force_authenticate(
             user=self.education_officer
@@ -295,7 +318,7 @@ class SessionReportViewTests(APITestCase):
     def test_education_officer_can_reject_report(self):
         report = self.create_report()
 
-        url = f'/session-reports/{report.id}/review/'
+        url = f'/api/education/session-reports/{report.id}/review/'
 
         self.client.force_authenticate(
             user=self.education_officer
@@ -335,7 +358,7 @@ class SessionReportViewTests(APITestCase):
     def test_reject_without_reason_returns_400(self):
         report = self.create_report()
 
-        url = f'/session-reports/{report.id}/review/'
+        url = f'/api/education/session-reports/{report.id}/review/'
 
         self.client.force_authenticate(
             user=self.education_officer
@@ -361,7 +384,7 @@ class SessionReportViewTests(APITestCase):
         original_present = report.present_count
         original_absent = report.absent_count
 
-        url = f'/session-reports/{report.id}/review/'
+        url = f'/api/education/session-reports/{report.id}/review/'
 
         self.client.force_authenticate(
             user=self.education_officer
@@ -408,7 +431,7 @@ class SessionReportViewTests(APITestCase):
     def test_approved_report_cannot_be_edited(self):
         report = self.create_report()
 
-        review_url = f'/session-reports/{report.id}/review/'
+        review_url = f'/api/education/session-reports/{report.id}/review/'
 
         self.client.force_authenticate(
             user=self.education_officer
@@ -426,7 +449,7 @@ class SessionReportViewTests(APITestCase):
             user=self.teacher
         )
 
-        detail_url = f'/session-reports/{report.id}/'
+        detail_url = f'/api/education/session-reports/{report.id}/'
 
         response = self.client.put(
             detail_url,
@@ -446,7 +469,7 @@ class SessionReportViewTests(APITestCase):
     def test_rejected_report_can_be_edited_and_resubmitted(self):
         report = self.create_report()
 
-        review_url = f'/session-reports/{report.id}/review/'
+        review_url = f'/api/education/session-reports/{report.id}/review/'
 
         self.client.force_authenticate(
             user=self.education_officer
@@ -470,7 +493,7 @@ class SessionReportViewTests(APITestCase):
             user=self.teacher
         )
 
-        detail_url = f'/session-reports/{report.id}/'
+        detail_url = f'/api/education/session-reports/{report.id}/'
 
         response = self.client.put(
             detail_url,
@@ -540,7 +563,7 @@ class SessionReportViewTests(APITestCase):
             user=self.education_officer
         )
 
-        review_url = f'/session-reports/{report.id}/review/'
+        review_url = f'/api/education/session-reports/{report.id}/review/'
 
         response = self.client.patch(
             review_url,
@@ -568,7 +591,7 @@ class SessionReportViewTests(APITestCase):
             user=self.teacher
         )
 
-        detail_url = f'/session-reports/{report.id}/'
+        detail_url = f'/api/education/session-reports/{report.id}/'
 
         response = self.client.put(
             detail_url,
