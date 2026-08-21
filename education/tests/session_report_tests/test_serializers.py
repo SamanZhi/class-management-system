@@ -115,3 +115,62 @@ class SessionReportSerializerTests(TestCase):
 
         self.assertFalse(serializer.is_valid())
         self.assertIn('session', serializer.errors)
+
+    def test_teacher_must_be_responsible_on_session_date(self):
+        CourseTeacher.objects.filter(
+            course_obj=self.course,
+            teacher=self.teacher,
+        ).delete()
+
+        serializer = SessionReportSerializer(
+            data=self.valid_data(),
+            context=self.get_context(self.teacher),
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('session', serializer.errors)
+
+    def test_teacher_before_start_date_is_invalid(self):
+        CourseTeacher.objects.filter(
+            course_obj=self.course,
+            teacher=self.teacher,
+        ).update(
+            start_date=date(2026, 9, 10),
+        )
+
+        serializer = SessionReportSerializer(
+            data=self.valid_data(),
+            context=self.get_context(self.teacher),
+        )
+
+        self.assertFalse(serializer.is_valid())
+
+    def test_teacher_after_end_date_is_invalid(self):
+        CourseTeacher.objects.filter(
+            course_obj=self.course,
+            teacher=self.teacher,
+        ).update(
+            end_date=date(2026, 9, 4),
+        )
+
+        serializer = SessionReportSerializer(
+            data=self.valid_data(),
+            context=self.get_context(self.teacher),
+        )
+
+        self.assertFalse(serializer.is_valid())
+
+    def test_teacher_with_no_end_date_is_valid(self):
+        CourseTeacher.objects.filter(
+            course_obj=self.course,
+            teacher=self.teacher,
+        ).update(
+            end_date=None,
+        )
+
+        serializer = SessionReportSerializer(
+            data=self.valid_data(),
+            context=self.get_context(self.teacher),
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
