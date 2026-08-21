@@ -44,7 +44,7 @@ class SessionReportViewTests(APITestCase):
             emergency_number='+989876543210',
         )
 
-        self.other_teacher = User.objects.create_user(
+        self.teacher2 = User.objects.create_user(
             username='new_teacher',
             password='pass321',
             role='teacher',
@@ -122,15 +122,21 @@ class SessionReportViewTests(APITestCase):
     def test_teacher_can_only_see_own_reports(self):
         own_report = self.create_report()
 
-        other_session = Session.objects.create(
+        session2 = Session.objects.create(
+            course_obj=self.course,
+            session_number=2,
+            date=date(2026, 9, 6),
+        )
+
+        teacher2 = Session.objects.create(
             course_obj=self.course,
             session_number=2,
             date=date(2026, 9, 6),
         )
 
         SessionReport.objects.create(
-            session=other_session,
-            teacher=self.other_teacher,
+            session=session2,
+            teacher=self.teacher2,
             summary='Other teacher report',
             present_count=10,
             absent_count=5,
@@ -160,15 +166,15 @@ class SessionReportViewTests(APITestCase):
         )
 
     def test_teacher_cannot_edit_another_teachers_report(self):
-        other_report = SessionReport.objects.create(
+        report2 = SessionReport.objects.create(
             session=self.session,
-            teacher=self.other_teacher,
+            teacher=self.teacher2,
             summary='Other report',
             present_count=10,
             absent_count=5,
         )
 
-        url = f'/session-reports/{other_report.id}/'
+        url = f'/session-reports/{report2.id}/'
 
         self.client.force_authenticate(
             user=self.teacher
@@ -218,7 +224,7 @@ class SessionReportViewTests(APITestCase):
 
     def test_unassigned_teacher_cannot_submit_report(self):
         self.client.force_authenticate(
-            user=self.other_teacher
+            user=self.teacher2
         )
 
         response = self.client.post(
@@ -228,6 +234,124 @@ class SessionReportViewTests(APITestCase):
                 'summary': 'Unauthorized report',
                 'present_count': 10,
                 'absent_count': 0,
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    def test_teacher_cannot_review_own_report(self):
+        report = self.create_report()
+
+        url = f'/session-reports/{report.id}/review/'
+
+        self.client.force_authenticate(
+            user=self.teacher
+        )
+
+        response = self.client.patch(
+            url,
+            {
+                'status': SessionReport.Status.APPROVED,
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_education_officer_can_approve_report(self):
+        report = self.create_report()
+
+        url = f'/session-reports/{report.id}/review/'
+
+        self.client.force_authenticate(
+            user=self.education_officer
+        )
+
+        response = self.client.patch(
+            url,
+            {
+                'status': SessionReport.Status.APPROVED,
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        report.refresh_from_db()
+
+        self.assertEqual(
+            report.status,
+            SessionReport.Status.APPROVED,
+        )
+
+        self.assertEqual(
+            report.reviewed_by,
+            self.education_officer,
+        )
+
+    def test_education_officer_can_reject_report(self):
+        report = self.create_report()
+
+        url = f'/session-reports/{report.id}/review/'
+
+        self.client.force_authenticate(
+            user=self.education_officer
+        )
+
+        response = self.client.patch(
+            url,
+            {
+                'status': SessionReport.Status.REJECTED,
+                'rejection_reason': 'Attendance needs correction.',
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        report.refresh_from_db()
+
+        self.assertEqual(
+            report.status,
+            SessionReport.Status.REJECTED,
+        )
+
+        self.assertEqual(
+            report.rejection_reason,
+            'Attendance needs correction.',
+        )
+
+        self.assertEqual(
+            report.reviewed_by,
+            self.education_officer,
+        )
+
+    def test_reject_without_reason_returns_400(self):
+        report = self.create_report()
+
+        url = f'/session-reports/{report.id}/review/'
+
+        self.client.force_authenticate(
+            user=self.education_officer
+        )
+
+        response = self.client.patch(
+            url,
+            {
+                'status': SessionReport.Status.REJECTED,
             },
             format='json',
         )
