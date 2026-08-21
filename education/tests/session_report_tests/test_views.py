@@ -411,3 +411,102 @@ class SessionReportViewTests(APITestCase):
             report.status,
             SessionReport.Status.APPROVED,
         )
+
+    def test_approved_report_cannot_be_edited(self):
+        report = self.create_report()
+
+        review_url = f'/session-reports/{report.id}/review/'
+
+        self.client.force_authenticate(
+            user=self.education_officer
+        )
+
+        self.client.patch(
+            review_url,
+            {
+                'status': SessionReport.Status.APPROVED,
+            },
+            format='json',
+        )
+
+        self.client.force_authenticate(
+            user=self.teacher
+        )
+
+        detail_url = f'/session-reports/{report.id}/'
+
+        response = self.client.put(
+            detail_url,
+            {
+                'summary': 'Trying to edit approved report.',
+                'present_count': 20,
+                'absent_count': 0,
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    def test_rejected_report_can_be_edited_and_resubmitted(self):
+        report = self.create_report()
+
+        review_url = f'/session-reports/{report.id}/review/'
+
+        self.client.force_authenticate(
+            user=self.education_officer
+        )
+
+        response = self.client.patch(
+            review_url,
+            {
+                'status': SessionReport.Status.REJECTED,
+                'rejection_reason': 'Please correct attendance.',
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        self.client.force_authenticate(
+            user=self.teacher
+        )
+
+        detail_url = f'/session-reports/{report.id}/'
+
+        response = self.client.put(
+            detail_url,
+            {
+                'summary': 'Corrected report.',
+                'present_count': 16,
+                'absent_count': 1,
+            },
+            format='json',
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+
+        report.refresh_from_db()
+
+        self.assertEqual(
+            report.summary,
+            'Corrected report.',
+        )
+
+        self.assertEqual(
+            report.present_count,
+            16,
+        )
+
+        self.assertEqual(
+            report.absent_count,
+            1,
+        )
