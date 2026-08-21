@@ -1,7 +1,6 @@
 from datetime import date
 
 from django.test import TestCase
-from rest_framework.test import APIRequestFactory
 
 from education.models import (
     Course,
@@ -56,7 +55,7 @@ class SessionReportSerializerTests(TestCase):
         )
 
         self.education_officer = User.objects.create_user(
-            username='education_officer',
+            username='test_education_officer',
             password='pass456',
             role='education_officer',
             phone_number='+989123456787',
