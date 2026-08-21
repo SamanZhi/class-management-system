@@ -56,7 +56,7 @@ class SessionReport(BaseModel):
             time.min
         )
 
-        session_datetime = datetime.make_aware(
+        session_datetime = timezone.make_aware(
             session_datetime,
             timezone.get_current_timezone
                 )
