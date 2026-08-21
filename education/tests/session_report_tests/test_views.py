@@ -1,6 +1,5 @@
 from datetime import date
 
-from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -123,12 +122,6 @@ class SessionReportViewTests(APITestCase):
         own_report = self.create_report()
 
         session2 = Session.objects.create(
-            course_obj=self.course,
-            session_number=2,
-            date=date(2026, 9, 6),
-        )
-
-        teacher2 = Session.objects.create(
             course_obj=self.course,
             session_number=2,
             date=date(2026, 9, 6),
