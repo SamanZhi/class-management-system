@@ -174,3 +174,54 @@ class SessionReportSerializerTests(TestCase):
         )
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_approved_report_cannot_be_updated(self):
+        report = SessionReport.objects.create(
+            session=self.session,
+            teacher=self.teacher,
+            summary='Original summary',
+            present_count=15,
+            absent_count=2,
+            status=SessionReport.Status.APPROVED,
+        )
+
+        serializer = SessionReportSerializer(
+            report,
+            data={
+                'summary': 'Changed summary',
+                'present_count': 20,
+                'absent_count': 0,
+            },
+            partial=True,
+            context=self.get_context(self.teacher),
+        )
+
+        self.assertFalse(serializer.is_valid())
+
+    def test_session_cannot_be_changed_on_update(self):
+        second_session = Session.objects.create(
+            course_obj=self.course,
+            session_number=2,
+            date=date(2026, 9, 6),
+        )
+
+        report = SessionReport.objects.create(
+            session=self.session,
+            teacher=self.teacher,
+            summary='Original summary',
+            present_count=15,
+            absent_count=2,
+        )
+
+        serializer = SessionReportSerializer(
+            report,
+            data={
+                'session': second_session.id,
+                'summary': 'Updated summary',
+            },
+            partial=True,
+            context=self.get_context(self.teacher),
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('session', serializer.errors)
