@@ -250,3 +250,47 @@ class SessionReportSerializerTests(TestCase):
         self.assertTrue(
             serializer.fields['rejection_reason'].read_only
         )
+
+
+class SessionReportReviewSerializerTests(TestCase):
+
+    def setUp(self):
+        self.school = School.objects.create(
+            name='School A',
+            address='Address A',
+        )
+
+        self.term = Term.objects.create(
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 11, 30),
+            type='regular',
+        )
+
+        self.course = Course.objects.create(
+            school=self.school,
+            term=self.term,
+            subject='Python',
+            duration=90,
+        )
+
+        self.teacher = User.objects.create_user(
+            username='test_teacher',
+            password='pass123',
+            role='teacher',
+            phone_number='+989123456789',
+            emergency_number='+989876543210',
+        )
+
+        self.session = Session.objects.create(
+            course_obj=self.course,
+            session_number=1,
+            date=date(2026, 9, 5),
+        )
+
+        self.report = SessionReport.objects.create(
+            session=self.session,
+            teacher=self.teacher,
+            summary='Test report',
+            present_count=15,
+            absent_count=2,
+        )

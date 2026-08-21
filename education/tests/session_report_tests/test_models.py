@@ -37,7 +37,7 @@ class SessionReportModelTests(TestCase):
         )
 
         self.teacher = User.objects.create_user(
-            username='test-teacher',
+            username='test_teacher',
             password='pass123',
             role='teacher',
             phone_number='+989123456789',
