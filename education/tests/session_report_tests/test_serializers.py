@@ -225,3 +225,28 @@ class SessionReportSerializerTests(TestCase):
 
         self.assertFalse(serializer.is_valid())
         self.assertIn('session', serializer.errors)
+
+    def test_teacher_is_read_only(self):
+        serializer = SessionReportSerializer()
+
+        self.assertIn(
+            'teacher',
+            serializer.fields,
+        )
+        self.assertTrue(
+            serializer.fields['teacher'].read_only
+        )
+
+    def test_status_is_read_only(self):
+        serializer = SessionReportSerializer()
+
+        self.assertTrue(
+            serializer.fields['status'].read_only
+        )
+
+    def test_rejection_reason_is_read_only_for_teacher(self):
+        serializer = SessionReportSerializer()
+
+        self.assertTrue(
+            serializer.fields['rejection_reason'].read_only
+        )
