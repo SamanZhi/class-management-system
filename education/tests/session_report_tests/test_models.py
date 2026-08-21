@@ -1,7 +1,9 @@
 from datetime import date, datetime, time, timedelta
 from unittest.mock import patch
 
+from django.db import IntegrityError
 from django.test import TestCase
+from django.utils import timezone
 
 from education.models import (
     Course,
@@ -79,7 +81,7 @@ class SessionReportModelTests(TestCase):
     def test_one_report_per_session(self):
         self.create_report()
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(IntegrityError):
             SessionReport.objects.create(
                 session=self.session,
                 teacher=self.teacher,
@@ -91,7 +93,7 @@ class SessionReportModelTests(TestCase):
     def test_is_late_is_false_before_48_hours(self):
         report = self.create_report()
 
-        updated_at = datetime(2026, 9, 6, 12, 0)
+        updated_at = timezone.make_aware(2026, 9, 6, 12, 0)
 
         with patch.object(
             SessionReport,
@@ -103,7 +105,9 @@ class SessionReportModelTests(TestCase):
     def test_is_late_is_false_at_exactly_48_hours(self):
         report = self.create_report()
 
-        updated_at = datetime(2026, 9, 7, 0, 0)
+        updated_at = datetime.fromisoformat(
+            '2026-09-06T12:00:00+00:00'
+        )
 
         with patch.object(
             SessionReport,
@@ -115,7 +119,9 @@ class SessionReportModelTests(TestCase):
     def test_is_late_is_true_after_48_hours(self):
         report = self.create_report()
 
-        updated_at = datetime(2026, 9, 7, 0, 1)
+        updated_at = datetime.fromisoformat(
+            '2026-09-07T00:00:00+00:00'
+        )
 
         with patch.object(
             SessionReport,
@@ -127,7 +133,9 @@ class SessionReportModelTests(TestCase):
     def test_is_late_is_recalculated_after_report_update(self):
         report = self.create_report()
 
-        first_updated_at = datetime(2026, 9, 5, 12, 0)
+        first_updated_at = datetime.fromisoformat(
+            '2026-09-07T00:01:00+00:00'
+        )
 
         with patch.object(
             SessionReport,
@@ -136,7 +144,9 @@ class SessionReportModelTests(TestCase):
         ):
             self.assertFalse(report.is_late)
 
-        second_updated_at = datetime(2026, 9, 7, 0, 1)
+        second_updated_at = datetime.fromisoformat(
+            '2026-09-07T00:01:00+00:00'
+        )
 
         with patch.object(
             SessionReport,
@@ -144,3 +154,21 @@ class SessionReportModelTests(TestCase):
             second_updated_at,
         ):
             self.assertTrue(report.is_late)
+
+    def test_rejection_reason_can_be_stored(self):
+        report = self.create_report()
+
+        report.status = SessionReport.Status.REJECTED
+        report.rejection_reason = 'Please correct attendance.'
+        report.save()
+
+        report.refresh_from_db()
+
+        self.assertEqual(
+            report.status,
+            SessionReport.Status.REJECTED,
+        )
+        self.assertEqual(
+            report.rejection_reason,
+            'Please correct attendance.',
+        )
