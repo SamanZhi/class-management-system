@@ -3,7 +3,6 @@ from unittest.mock import patch
 
 from django.db import IntegrityError
 from django.test import TestCase
-from django.utils import timezone
 
 from education.models import (
     Course,
@@ -93,7 +92,9 @@ class SessionReportModelTests(TestCase):
     def test_is_late_is_false_before_48_hours(self):
         report = self.create_report()
 
-        updated_at = timezone.make_aware(2026, 9, 6, 12, 0)
+        updated_at = datetime.fromisoformat(
+            '2026-09-06T12:00:00+00:00'
+        )
 
         with patch.object(
             SessionReport,
@@ -106,7 +107,7 @@ class SessionReportModelTests(TestCase):
         report = self.create_report()
 
         updated_at = datetime.fromisoformat(
-            '2026-09-06T12:00:00+00:00'
+            '2026-09-07T00:00:00+00:00'
         )
 
         with patch.object(
@@ -120,7 +121,7 @@ class SessionReportModelTests(TestCase):
         report = self.create_report()
 
         updated_at = datetime.fromisoformat(
-            '2026-09-07T00:00:00+00:00'
+            '2026-09-07T00:01:00+00:00'
         )
 
         with patch.object(
@@ -134,7 +135,7 @@ class SessionReportModelTests(TestCase):
         report = self.create_report()
 
         first_updated_at = datetime.fromisoformat(
-            '2026-09-07T00:01:00+00:00'
+            '2026-09-06T12:00:00+00:00'
         )
 
         with patch.object(

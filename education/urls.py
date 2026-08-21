@@ -11,7 +11,7 @@ from education.views.session import SessionDetailView, SessionListCreateView
 from education.views.session_report import (
     SessionReportDetailView,
     SessionReportListCreateView,
-    SessionReportReviewSerializer,
+    SessionReportReviewView,
 )
 from education.views.term import TermDetailView, TermListCreateView
 
@@ -27,6 +27,6 @@ urlpatterns = [
     path('sessions/', SessionListCreateView.as_view(), name='session-list'),
     path('sessions/<int:pk>/', SessionDetailView.as_view(), name='session-detail'),
     path('session-reports/', SessionReportListCreateView.as_view(), name='session-report-list'),
-    path('session-reports<int:pk>/', SessionReportDetailView.as_view(), name='session-report-detail'),
-    path('session-reports/<int:pk>/review/', SessionReportReviewSerializer, name='session-report-review')
+    path('session-reports/<int:pk>/', SessionReportDetailView.as_view(), name='session-report-detail'),
+    path('session-reports/<int:pk>/review/', SessionReportReviewView.as_view(), name='session-report-review')
 ]

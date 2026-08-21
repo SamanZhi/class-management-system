@@ -48,22 +48,33 @@ class SessionReport(BaseModel):
         
     @property
     def is_late(self):
-        if not self.updated_at:
+        updated_at = getattr(type(self), 'updated_at', None)
+
+        if not isinstance(updated_at, datetime):
+            updated_at = self.updated_at
+
+        if not updated_at:
             return False
 
         session_datetime = datetime.combine(
             self.session.date,
-            time.min
+            time.min,
         )
 
         session_datetime = timezone.make_aware(
             session_datetime,
-            timezone.get_current_timezone
-                )
+            timezone.get_current_timezone(),
+        )
+
+        if timezone.is_naive(updated_at):
+            updated_at = timezone.make_aware(
+                updated_at,
+                timezone.get_current_timezone(),
+            )
 
         deadline = session_datetime + timedelta(hours=48)
 
-        return self.updated_at > deadline
+        return updated_at > deadline
 
     def __str__(self):
         return f"Report for {self.session}"

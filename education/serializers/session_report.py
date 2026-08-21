@@ -25,7 +25,7 @@ class SessionReportSerializer(serializers.ModelSerializer):
             'teacher',
             'status',
             'rejection_reason',
-            'created_app',
+            'created_at',
             'updated_at'
         ]
 
@@ -92,23 +92,29 @@ class SessionReportReviewSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         status = attrs.get('status')
-        rejection_reason = attrs.get('rejection_reason', '').strip()
+        rejection_reason = attrs.get('rejection_reason')
 
-        if status not in [SessionReport.Status.APPROVED, SessionReport.Status.REJECTED]:
-            raise serializers.ValidationError({
-                'status': 'Status must be approved or rejected.'
-            })
-
-        if (status == SessionReport.Status.REJECTED and not rejection_reason):
+        if status == SessionReport.Status.REJECTED and not rejection_reason:
             raise serializers.ValidationError({
                 'rejection_reason': (
                     'Rejection reason is required when rejecting a report.'
                 )
             })
 
-        if (self.instance and self.instance.status == SessionReport.Status.APPROVED):
+        if status not in (
+            SessionReport.Status.APPROVED,
+            SessionReport.Status.REJECTED,
+        ):
+            raise serializers.ValidationError({
+                'status': 'Invalid review status.'
+            })
+
+        if self.instance and self.instance.status in (
+            SessionReport.Status.APPROVED,
+            SessionReport.Status.REJECTED,
+        ):
             raise serializers.ValidationError(
-                'Approved reports cannot be reviewed again.'
+                'This report has already been reviewed.'
             )
 
         return attrs
