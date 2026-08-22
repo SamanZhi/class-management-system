@@ -1,3 +1,4 @@
+from django.utils.dateparse import parse_date
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -13,39 +14,104 @@ from education.serializers.session_report import (
 class SessionReportListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        if request.user.role != 'teacher':
-            return Response(
-                {'detail': 'Only teachers can access sessions.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        reports = SessionReport.objects.filter(
-            teacher=request.user
-        ).select_related(
+    def get_queryset(self, request):
+        reports = SessionReport.objects.select_related(
             'session',
             'session__course_obj',
             'session__course_obj__school',
-            'session__course_obj__term'
+            'session__course_obj__term',
+            'teacher',
+            'reviewed_by',
         )
+
+        if request.user.role == 'teacher':
+            reports = reports.filter(teacher=request.user)
+
+        elif request.user.role == 'education_officer':
+            pass
+
+        else:
+            return None
+
+        school_id = request.query_params.get('school')
+        course_id = request.query_params.get('course')
+        teacher_id = request.query_params.get('teacher')
+
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        if school_id:
+            reports = reports.filter(
+                session__course_obj__school_id=school_id
+            )
+
+        if course_id:
+            reports = reports.filter(
+                session__course_obj_id=course_id
+            )
+
+        if teacher_id:
+            reports = reports.filter(
+                teacher_id=teacher_id
+            )
+
+        if start_date:
+            parsed_start_date = parse_date(start_date)
+
+            if parsed_start_date:
+                reports = reports.filter(
+                    session__date__gte=parsed_start_date
+                )
+
+        if end_date:
+            parsed_end_date = parse_date(end_date)
+
+            if parsed_end_date:
+                reports = reports.filter(
+                    session__date__lte=parsed_end_date
+                )
+
+        return reports.order_by('-session__date', '-id')
+
+    def get(self, request):
+        if request.user.role not in [
+            'teacher',
+            'education_officer',
+        ]:
+            return Response(
+                {
+                    'detail': (
+                        'Only teachers and education officers '
+                        'can access session reports.'
+                    )
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        reports = self.get_queryset(request)
 
         serializer = SessionReportSerializer(
             reports,
-            many=True
+            many=True,
         )
 
-        return Response(serializer.data)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
 
     def post(self, request):
         if request.user.role != 'teacher':
             return Response(
-                {'detail': 'Only teachers can access sessions.'},
-                status=status.HTTP_403_FORBIDDEN
+                {
+                    'detail': 'Only teachers can create session reports.'
+                },
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         serializer = SessionReportSerializer(
             data=request.data,
-            context={'request': request}
+            context={'request': request},
         )
 
         if serializer.is_valid():
@@ -55,12 +121,12 @@ class SessionReportListCreateView(APIView):
 
             return Response(
                 serializer.data,
-                status=status.HTTP_201_CREATED
+                status=status.HTTP_201_CREATED,
             )
 
         return Response(
             serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
 
@@ -75,16 +141,25 @@ class SessionReportDetailView(APIView):
                 'session__course_obj__school',
                 'session__course_obj__term',
                 'teacher',
-                'reviewed_by'
-        ).get(pk=pk)
+                'reviewed_by',
+            ).get(pk=pk)
+
         except SessionReport.DoesNotExist:
             return None
 
     def get(self, request, pk):
-        if request.user.role != 'teacher':
+        if request.user.role not in [
+            'teacher',
+            'education_officer',
+        ]:
             return Response(
-                {'detail': 'Only teachers can access sessions reports.'},
-                status=status.HTTP_403_FORBIDDEN
+                {
+                    'detail': (
+                        'Only teachers and education officers '
+                        'can access session reports.'
+                    )
+                },
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         report = self.get_object(pk)
@@ -92,24 +167,32 @@ class SessionReportDetailView(APIView):
         if report is None:
             return Response(
                 {'detail': 'Session report not found.'},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
 
-        if report.teacher != request.user:
+        if (
+            request.user.role == 'teacher'
+            and report.teacher_id != request.user.id
+        ):
             return Response(
                 {'detail': 'You cannot access this report.'},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         serializer = SessionReportSerializer(report)
 
-        return Response(serializer.data)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
 
     def put(self, request, pk):
         if request.user.role != 'teacher':
             return Response(
-                {'detail': 'Only teachers can update sessions.'},
-                status=status.HTTP_403_FORBIDDEN
+                {
+                    'detail': 'Only teachers can update session reports.'
+                },
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         report = self.get_object(pk)
@@ -117,25 +200,30 @@ class SessionReportDetailView(APIView):
         if report is None:
             return Response(
                 {'detail': 'Session report not found.'},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
 
-        if report.teacher != request.user:
+        if report.teacher_id != request.user.id:
             return Response(
                 {'detail': 'You cannot edit this report.'},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         if report.status == SessionReport.Status.APPROVED:
             return Response(
-                {'detail': 'Approved reports cannot be edited.'},
-                status=status.HTTP_400_BAD_REQUEST
+                {
+                    'detail': (
+                        'Approved reports cannot be edited.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         serializer = SessionReportSerializer(
             report,
             data=request.data,
-            context={'request': request}
+            partial=True,
+            context={'request': request},
         )
 
         if serializer.is_valid():
@@ -151,12 +239,16 @@ class SessionReportDetailView(APIView):
                     teacher=request.user,
                 )
 
-            return Response(serializer.data)
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK,
+            )
 
         return Response(
             serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
-    )
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
 
 class SessionReportReviewView(APIView):
     permission_classes = [IsAuthenticated]
@@ -167,30 +259,46 @@ class SessionReportReviewView(APIView):
                 'session',
                 'session__course_obj',
                 'teacher',
-                'reviewed_by'
-        ).get(pk=pk)
+                'reviewed_by',
+            ).get(pk=pk)
+
         except SessionReport.DoesNotExist:
             return None
 
     def patch(self, request, pk):
         if request.user.role != 'education_officer':
-                return Response(
-                    {'detail': 'Only education officers can review reports.'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-        
+            return Response(
+                {
+                    'detail': (
+                        'Only education officers '
+                        'can review reports.'
+                    )
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         report = self.get_object(pk)
-        
+
         if report is None:
             return Response(
                 {'detail': 'Session report not found.'},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if report.status == SessionReport.Status.APPROVED:
+            return Response(
+                {
+                    'detail': (
+                        'Approved reports cannot be reviewed again.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         serializer = SessionReportReviewSerializer(
             report,
             data=request.data,
-            partial=True
+            partial=True,
         )
 
         if serializer.is_valid():
@@ -198,9 +306,12 @@ class SessionReportReviewView(APIView):
                 reviewed_by=request.user
             )
 
-            return Response(serializer.data)
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK,
+            )
 
         return Response(
             serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )

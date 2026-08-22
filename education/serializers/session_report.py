@@ -18,7 +18,8 @@ class SessionReportSerializer(serializers.ModelSerializer):
             'rejection_reason',
             'teacher',
             'created_at',
-            'updated_at'
+            'updated_at',
+            'is_late'
         ]
         read_only_fields = [
             'id',
@@ -26,7 +27,8 @@ class SessionReportSerializer(serializers.ModelSerializer):
             'status',
             'rejection_reason',
             'created_at',
-            'updated_at'
+            'updated_at',
+            'is_late'
         ]
 
     def validate(self, attrs):
@@ -76,7 +78,6 @@ class SessionReportSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'session': (
                     'You were not responsible for this course '
-                    'on the session date.'
                 )
             })
 
@@ -87,7 +88,11 @@ class SessionReportReviewSerializer(serializers.ModelSerializer):
         model = SessionReport
         fields = [
             'status',
-            'rejection_reason'
+            'rejection_reason',
+            'reviewed_by',
+        ]
+        read_only_fields = [
+            'reviewed_by',
         ]
 
     def validate(self, attrs):
