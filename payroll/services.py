@@ -6,8 +6,8 @@ from django.db import transaction
 from django.utils import timezone
 
 from education.models import SessionReport
-from .models import PayrollRecord, TeacherTermRate
 
+from .models import PayrollRecord, TeacherTermRate
 
 PERCENT_60 = Decimal('0.7')
 PERCENT_120 = Decimal('1.3')
