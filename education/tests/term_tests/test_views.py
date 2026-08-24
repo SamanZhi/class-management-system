@@ -32,7 +32,7 @@ class TermViewTest(APITestCase):
 
         self.term = Term.objects.create(
             start_date=date(2026, 9, 1),
-            end_date=date(2026, 11, 31),
+            end_date=date(2026, 11, 30),
             type='regular'
         ),
 
@@ -72,7 +72,7 @@ class TermViewTest(APITestCase):
         response = self.client.post(self.list_url, 
             {
             'start_date': '2026-09-01', 
-            'end_date': '2026-11-31',
+            'end_date': '2026-11-30',
             'type': 'regular'
             }
         )
@@ -85,7 +85,7 @@ class TermViewTest(APITestCase):
         response = self.client.post(self.list_url, 
             {
                 'start_date': '2026-09-01', 
-                'end_date': '2026-11-31',
+                'end_date': '2026-11-30',
                 'type': 'regular'
             }
         )
@@ -95,7 +95,7 @@ class TermViewTest(APITestCase):
         self.assertTrue(
             Term.objects.filter(
                 start_date=date(2026, 9, 1), 
-                end_date=date(2026, 11, 31)
+                end_date=date(2026, 11, 30)
             ).exists()
         )
 
@@ -105,7 +105,7 @@ class TermViewTest(APITestCase):
         response = self.client.post(self.list_url, 
             {
             'start_date': '2026-09-01', 
-            'end_date': '2026-11-31',
+            'end_date': '2026-11-30',
             'type': 'regular'
             }
         )

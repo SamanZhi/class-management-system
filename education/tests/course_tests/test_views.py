@@ -1,12 +1,10 @@
 from datetime import date
 
 from django.urls import reverse
-from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from education.models import Course, CourseTeacher, School, Term
-
 from users.models import User
 
 
@@ -16,7 +14,7 @@ class CourseViewTests(APITestCase):
 
         self.term = Term.objects.create(
             start_date=date(2026, 9, 1),
-            end_date=date(2026, 11, 31),
+            end_date=date(2026, 11, 30),
             type='regular'
         )
 
@@ -348,7 +346,7 @@ class CourseTeacherViewTests(APITestCase):
 
         self.term = Term.objects.create(
             start_date=date(2026, 9, 1),
-            end_date=date(2026, 11, 31),
+            end_date=date(2026, 11, 30),
             type='regular'
         )
         

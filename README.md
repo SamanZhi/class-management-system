@@ -1,278 +1,291 @@
 # Class Management System
 
-Django REST API for managing classes, session reports, and instructor payroll calculation.
+Django REST API برای مدیریت مدارس، ترم‌ها، کلاس‌ها، جلسات، گزارش جلسات و در ادامه محاسبه حقوق مربیان.
 
-This project is the final project of **Maktab 141 Python Bootcamp** and is being developed in multiple phases.
+## وضعیت پروژه
 
----
+**نسخه فعلی: پایان فاز ۳**
 
-## Project Overview
+در این نسخه، فازهای ۱ تا ۳ پیاده‌سازی شده‌اند:
 
-The system is designed for an educational company that manages classes in different schools.
+- فاز ۱: زیرساخت کاربران، نقش‌ها و احراز هویت JWT
+- فاز ۲: مدیریت مدرسه، ترم، کلاس و تخصیص مربی
+- فاز ۳: مدیریت جلسات و چرخه کامل گزارش جلسه
 
-The main roles in the system are:
-
-* **Teacher** — teaches classes and submits session reports.
-* **Education Officer** — manages schools, terms, classes, teacher-class assignments, and reviews session reports.
-* **Finance Officer** — manages payroll rates and calculates monthly teacher salaries.
-
-The project is implemented as an API using Django and Django REST Framework.
+فاز ۴ شامل محاسبه حقوق مربیان در ادامه پروژه خواهد بود.
 
 ---
 
-## Current Progress
+## فهرست مطالب
 
-| Phase   | Description                      | Status      |
-| ------- | -------------------------------- | ----------- |
-| Phase 0 | Requirements Q&A                 | Completed   |
-| Phase 1 | System Foundation, Users & Roles | Completed   |
-| Phase 2 | School, Term & Class Management  | Completed   |
-| Phase 3 | Session Reports                  | Not started |
-| Phase 4 | Payroll & Final Integration      | Not started |
-
----
-
-# Phase 1 — System Foundation, Users & Roles
-
-## What Was Built
-
-The following functionality was implemented during Phase 1:
-
-* User management with three system roles:
-
-  * Teacher
-  * Education Officer
-  * Finance Officer
-* Role-based access control.
-* JWT authentication.
-* Login functionality.
-* An endpoint for checking the currently authenticated user and their role.
-* Teacher-specific information such as:
-
-  * Name
-  * Contact phone
-  * Emergency contact
-* Basic data models required for the following concepts:
-
-  * School
-  * Term
-  * Class
-* Management command for creating users with a specific role.
-* API structure for the project.
-* Tests for models, serializers, and views.
-
-The system does not provide public user registration. Users are created by the system administrator through the management command.
+- [معرفی پروژه](#معرفی-پروژه)
+- [نقش‌های سیستم](#نقشهای-سیستم)
+- [قابلیت‌های پیاده‌سازی‌شده](#قابلیتهای-پیادهسازی‌شده)
+- [ساختار پروژه](#ساختار-پروژه)
+- [نصب و راه‌اندازی](#نصب-و-راهاندازی)
+- [احراز هویت](#احراز-هویت)
+- [API Endpoints](#api-endpoints)
+- [چرخه گزارش جلسه](#چرخه-گزارش-جلسه)
+- [تست‌ها](#تستها)
+- [محدودیت‌ها و نکات](#محدودیتها-و-نکات)
+- [تصمیمات فنی](#تصمیمات-فنی)
+- [فازهای پروژه](#فازهای-پروژه)
 
 ---
 
-# Phase 2 — School, Term & Class Management
+## معرفی پروژه
 
-## What Was Built
+این پروژه یک سیستم مدیریت آموزشی و گزارش‌دهی کلاس است که در آن:
 
-Phase 2 focuses on building the educational structure of the system and connecting teachers to classes.
+1. مسئول آموزش مدرسه، ترم و کلاس را مدیریت می‌کند.
+2. مربی به کلاس اختصاص داده می‌شود.
+3. جلسات کلاس از قبل توسط مسئول آموزش ثبت می‌شوند.
+4. مربی بعد از برگزاری جلسه گزارش آن را ثبت می‌کند.
+5. مسئول آموزش گزارش را بررسی، تأیید یا رد می‌کند.
+6. گزارش ردشده می‌تواند توسط همان مربی ویرایش و دوباره ارسال شود.
+7. در فاز ۴، گزارش‌های تأییدشده مبنای محاسبه حقوق خواهند بود.
 
-### School Management
-
-Education Officers can:
-
-* Create schools.
-* Update schools.
-* View a list of schools.
-* View school details.
-
-### Term Management
-
-The system supports academic terms with:
-
-* Start date.
-* End date.
-* Term type:
-
-  * Normal
-  * Summer
-
-Terms cannot overlap.
-
-### Class Management
-
-Education Officers can create and manage classes connected to:
-
-* A school.
-* A term.
-* A teacher through a separate teacher-class relationship.
-
-Each class has a session duration, which can only be one of:
-
-* 60 minutes
-* 90 minutes
-* 120 minutes
-
-Invalid session durations are rejected by validation.
-
-### Teacher-Class Assignment
-
-A teacher can be assigned to a class with:
-
-* Assignment start date.
-* Optional assignment end date.
-
-A class can have multiple teachers during its lifetime, as long as their assignment periods do not overlap.
-
-Teachers can view only the classes assigned to them, including their current and previous classes.
-
-### Phase 2 Tests
-
-Tests were added for the Phase 2 components, including:
-
-* Model tests.
-* Serializer tests.
-* View/API tests.
-* Validation rules.
-* Teacher-class assignment rules.
-* Role-based access restrictions.
+API با Django REST Framework پیاده‌سازی شده و احراز هویت با JWT انجام می‌شود.
 
 ---
 
-# Project Structure
+## نقش‌های سیستم
 
-```text
-class-management-system/
-│
-├── manage.py
-│
-├── config/
-│   ├── settings.py
-│   ├── urls.py
-│   ├── wsgi.py
-│   └── asgi.py
-│
-├── apps/
-│   ├── users/
-│   │   ├── models.py
-│   │   ├── serializers.py
-│   │   ├── views.py
-│   │   ├── urls.py
-│   │   └── tests/
-│   │
-│   ├── school/
-│   │   ├── models.py
-│   │   ├── serializers.py
-│   │   ├── views.py
-│   │   ├── urls.py
-│   │   └── tests/
-│   │
-│   ├── term/
-│   │   ├── models.py
-│   │   ├── serializers.py
-│   │   ├── views.py
-│   │   ├── urls.py
-│   │   └── tests/
-│   │
-│   └── course/
-│       ├── models.py
-│       ├── serializers.py
-│       ├── views.py
-│       ├── urls.py
-│       └── tests/
-│
-├── requirements.txt
-├── README.md
-└── .gitignore
-```
+سیستم سه نقش اصلی دارد:
 
-> The exact directory structure may change as new phases are implemented.
+- `teacher` — مربی
+- `education_officer` — مسئول آموزش
+- `finance_officer` — مسئول مالی
+
+هر کاربر فقط یک نقش دارد و دسترسی endpointها بر اساس نقش کنترل می‌شود.
 
 ---
 
-# Requirements
+## قابلیت‌های پیاده‌سازی‌شده
 
-Before running the project, make sure you have:
+### فاز ۱ — کاربران و احراز هویت
 
-* Python 3.x
-* PostgreSQL
-* pip
-* Git
-
----
-
-# Installation
-
-## 1. Clone the repository
-
-```bash
-git clone <repository-url>
-cd class-management-system
-```
-
-## 2. Create a virtual environment
-
-### Linux / macOS
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### Windows
-
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
-
-## 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-# Environment Variables
-
-Create a `.env` file in the project root and configure the required environment variables.
-
-Example:
-
-```env
-DEBUG=True
-
-SECRET_KEY=your-secret-key
-
-DB_NAME=your_database
-DB_USER=your_database_user
-DB_PASSWORD=your_database_password
-DB_HOST=localhost
-DB_PORT=5432
-```
-
-Do not commit real credentials or secret keys to the repository.
-
----
-
-# Database Setup
-
-After configuring PostgreSQL and the environment variables, run:
-
-```bash
-python manage.py migrate
-```
-
----
-
-# Creating Users
-
-The project does not have public user registration.
-
-Users can be created using the Django management command.
-
-Example:
+- Custom User Model بر پایه `AbstractUser`
+- نقش‌های `teacher`، `education_officer` و `finance_officer`
+- اطلاعات تماس مربی شامل شماره تماس و شماره تماس اضطراری
+- احراز هویت JWT با `djangorestframework-simplejwt`
+- endpoint برای مشاهده کاربر واردشده
+- کنترل دسترسی مبتنی بر نقش
+- management command برای ساخت کاربر:
 
 ```bash
 python manage.py create_user --role=teacher
 ```
 
-Other supported roles:
+---
+
+### فاز ۲ — مدرسه، ترم، کلاس و تخصیص مربی
+
+مدل‌های اصلی فاز ۲ در اپ `education` قرار دارند:
+
+- `School`
+- `Term`
+- `Course`
+- `CourseTeacher`
+
+قابلیت‌های اصلی:
+
+- ایجاد، مشاهده و ویرایش مدرسه
+- ایجاد و مدیریت ترم
+- ارتباط کلاس با مدرسه و ترم
+- تعیین مدت جلسه کلاس
+- اختصاص مربی به کلاس با `start_date` و `end_date`
+- پشتیبانی از چند مربی برای یک کلاس در بازه‌های زمانی مختلف
+- جلوگیری از همپوشانی بازه‌های مسئولیت مربیان
+- نمایش کلاس‌های مربوط به مربی
+- Soft Delete برای مدل‌هایی که از `SoftDeleteModel` استفاده می‌کنند
+
+---
+
+### فاز ۳ — جلسات و گزارش جلسات
+
+فاز ۳ در اپ `education` پیاده‌سازی شده و شامل دو مدل اصلی است:
+
+#### `Session`
+
+هر جلسه به یک کلاس (`Course`) متصل است و شامل:
+
+- `session_number`
+- `date`
+- `course_obj`
+
+قواعد اصلی:
+
+- شماره جلسه برای هر کلاس یکتا است.
+- برای یک کلاس، دو جلسه در یک تاریخ ثبت نمی‌شود.
+- تاریخ جلسه باید داخل بازه ترم باشد.
+- جلسات توسط مسئول آموزش ایجاد و مدیریت می‌شوند.
+- جلسه آینده می‌تواند از قبل برنامه‌ریزی شود.
+- حذف جلسه به صورت Soft Delete انجام می‌شود.
+
+#### `SessionReport`
+
+هر جلسه حداکثر یک گزارش دارد و شامل:
+
+- `session`
+- `teacher`
+- `summary`
+- `present_count`
+- `absent_count`
+- `status`
+- `rejection_reason`
+- `reviewed_by`
+- `created_at`
+- `updated_at`
+
+وضعیت‌های گزارش:
+
+- `pending`
+- `approved`
+- `rejected`
+
+قواعد اصلی گزارش:
+
+- فقط مربی می‌تواند گزارش ایجاد کند.
+- مربی فقط برای کلاسی که در تاریخ جلسه مسئول آن بوده می‌تواند گزارش ثبت کند.
+- ثبت گزارش برای جلسه آینده مجاز نیست.
+- مربی نمی‌تواند گزارش مربی دیگر را مشاهده یا ویرایش کند.
+- مسئول آموزش می‌تواند گزارش‌ها را مشاهده و بررسی کند.
+- مسئول آموزش فقط وضعیت و توضیح بررسی را تغییر می‌دهد و محتوای گزارش را تغییر نمی‌دهد.
+- مربی نمی‌تواند گزارش خودش را تأیید یا رد کند.
+- رد کردن گزارش نیازمند `rejection_reason` است.
+- گزارش تأییدشده قابل ویرایش نیست.
+- گزارش ردشده توسط مربی قابل ویرایش و ارسال مجدد است.
+- بعد از ارسال مجدد، وضعیت گزارش دوباره `pending` می‌شود.
+- گزارش به صورت `OneToOne` به جلسه متصل است؛ بنابراین برای هر جلسه فقط یک گزارش وجود دارد.
+
+### قاعده ۴۸ ساعت
+
+ویژگی `is_late` در مدل `SessionReport` به صورت property محاسبه می‌شود.
+
+مبنای محاسبه:
+
+```text
+session.date + 48 hours
+```
+
+اگر `updated_at` گزارش **بیشتر از** این زمان باشد:
+
+```text
+is_late = True
+```
+
+و اگر دقیقاً در مرز ۴۸ ساعت باشد:
+
+```text
+is_late = False
+```
+
+`updated_at` زمان آخرین ویرایش گزارش است؛ بنابراین در ویرایش و ارسال مجدد نیز وضعیت تأخیر بر اساس آخرین ویرایش دوباره محاسبه می‌شود.
+
+---
+
+## ساختار پروژه
+
+```text
+project_root/
+│
+├── config/
+│   ├── settings.py
+│   ├── urls.py
+│   ├── asgi.py
+│   └── wsgi.py
+│
+├── core/
+│   └── models.py
+│       ├── BaseModel
+│       ├── SoftDeleteModel
+│       └── SoftDeleteManager
+│
+├── users/
+│   ├── models.py
+│   ├── serializers.py
+│   ├── views.py
+│   ├── permissions.py
+│   ├── urls.py
+│   ├── admin.py
+│   ├── management/
+│   │   └── commands/
+│   │       └── create_user.py
+│   └── tests/
+│
+├── education/
+│   ├── models/
+│   │   ├── school.py
+│   │   ├── term.py
+│   │   ├── course.py
+│   │   ├── session.py
+│   │   └── session_report.py
+│   │
+│   ├── serializers/
+│   │   ├── school.py
+│   │   ├── term.py
+│   │   ├── course.py
+│   │   ├── session.py
+│   │   └── session_report.py
+│   │
+│   ├── views/
+│   │   ├── school.py
+│   │   ├── term.py
+│   │   ├── course.py
+│   │   ├── session.py
+│   │   └── session_report.py
+│   │
+│   ├── migrations/
+│   └── tests/
+│       ├── school_tests/
+│       ├── term_tests/
+│       ├── course_tests/
+│       ├── session_tests/
+│       └── session_report_tests/
+│
+├── postman/
+├── .postman/
+├── manage.py
+├── requirements.txt
+├── db.sqlite3
+└── README.md
+```
+
+---
+
+## نصب و راه‌اندازی
+
+### پیش‌نیاز
+
+- Python 3.10+
+- Django
+- Django REST Framework
+- djangorestframework-simplejwt
+- drf-spectacular
+
+### نصب وابستگی‌ها
+
+```bash
+pip install -r requirements.txt
+```
+
+### اعمال migrationها
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+### ساخت کاربر
+
+نمونه:
+
+```bash
+python manage.py create_user --role=teacher
+```
+
+نقش‌های معتبر:
 
 ```text
 teacher
@@ -280,217 +293,374 @@ education_officer
 finance_officer
 ```
 
-The exact required arguments depend on the implementation of the management command.
-
----
-
-# Running the Project
-
-Start the Django development server:
+### اجرای سرور
 
 ```bash
 python manage.py runserver
 ```
 
-The API will then be available at:
+در تنظیمات فعلی پروژه، دیتابیس توسعه `SQLite` است و فایل آن `db.sqlite3` است.
 
-```text
-http://127.0.0.1:8000/
+---
+
+## احراز هویت
+
+احراز هویت API با JWT انجام می‌شود.
+
+### دریافت توکن
+
+```http
+POST /api/users/login/
+```
+
+### Refresh Token
+
+```http
+POST /api/users/token/refresh/
+```
+
+برای endpointهای محافظت‌شده باید access token را به صورت زیر ارسال کرد:
+
+```http
+Authorization: Bearer <access_token>
+```
+
+### کاربر فعلی
+
+```http
+GET /api/users/me/
+```
+
+### پروفایل
+
+```http
+GET /api/users/profile/
 ```
 
 ---
 
-# Running Tests
+## API Endpoints
 
-Run the complete test suite with:
+Base URL:
+
+```text
+/api/
+```
+
+### کاربران
+
+| Method | Endpoint | توضیح |
+|---|---|---|
+| `POST` | `/api/users/login/` | دریافت JWT |
+| `POST` | `/api/users/token/refresh/` | دریافت access token جدید |
+| `GET` | `/api/users/me/` | اطلاعات کاربر واردشده |
+| `GET` | `/api/users/profile/` | مشاهده پروفایل |
+| `GET` | `/api/users/dashboard/teacher/` | داشبورد مربی |
+| `GET` | `/api/users/dashboard/education-officer/` | داشبورد مسئول آموزش |
+| `GET` | `/api/users/dashboard/finance-officer/` | داشبورد مسئول مالی |
+
+### آموزش — مدرسه
+
+| Method | Endpoint | توضیح |
+|---|---|---|
+| `GET` | `/api/education/schools/` | لیست مدارس |
+| `POST` | `/api/education/schools/` | ایجاد مدرسه |
+| `GET` | `/api/education/schools/<id>/` | جزئیات مدرسه |
+| `PUT` | `/api/education/schools/<id>/` | ویرایش مدرسه |
+| `DELETE` | `/api/education/schools/<id>/` | حذف نرم |
+
+### آموزش — ترم
+
+| Method | Endpoint | توضیح |
+|---|---|---|
+| `GET` | `/api/education/terms/` | لیست ترم‌ها |
+| `POST` | `/api/education/terms/` | ایجاد ترم |
+| `GET` | `/api/education/terms/<id>/` | جزئیات ترم |
+| `PUT` | `/api/education/terms/<id>/` | ویرایش ترم |
+| `DELETE` | `/api/education/terms/<id>/` | حذف نرم |
+
+### آموزش — کلاس و مربی
+
+| Method | Endpoint | توضیح |
+|---|---|---|
+| `GET` | `/api/education/courses/` | لیست کلاس‌ها |
+| `POST` | `/api/education/courses/` | ایجاد کلاس |
+| `GET` | `/api/education/courses/<id>/` | جزئیات کلاس |
+| `PUT` | `/api/education/courses/<id>/` | ویرایش کلاس |
+| `DELETE` | `/api/education/courses/<id>/` | حذف نرم |
+| `GET` | `/api/education/courses/teachers/` | لیست تخصیص‌های مربی |
+| `POST` | `/api/education/courses/teachers/` | تخصیص مربی |
+| `GET` | `/api/education/courses/teachers/<id>/` | جزئیات تخصیص |
+| `PUT` | `/api/education/courses/teachers/<id>/` | ویرایش تخصیص |
+| `DELETE` | `/api/education/courses/teachers/<id>/` | حذف تخصیص |
+
+### آموزش — جلسات
+
+| Method | Endpoint | توضیح |
+|---|---|---|
+| `GET` | `/api/education/sessions/` | لیست جلسات |
+| `POST` | `/api/education/sessions/` | ایجاد جلسه |
+| `GET` | `/api/education/sessions/<id>/` | جزئیات جلسه |
+| `PUT` | `/api/education/sessions/<id>/` | ویرایش جلسه |
+| `DELETE` | `/api/education/sessions/<id>/` | حذف نرم جلسه |
+
+مدیریت جلسات در نسخه فعلی فقط برای `education_officer` مجاز است.
+
+### آموزش — گزارش جلسات
+
+| Method | Endpoint | توضیح |
+|---|---|---|
+| `GET` | `/api/education/session-reports/` | لیست گزارش‌ها |
+| `POST` | `/api/education/session-reports/` | ثبت گزارش توسط مربی |
+| `GET` | `/api/education/session-reports/<id>/` | مشاهده گزارش |
+| `PUT` | `/api/education/session-reports/<id>/` | ویرایش گزارش توسط مربی |
+| `PATCH` | `/api/education/session-reports/<id>/review/` | تأیید یا رد توسط مسئول آموزش |
+
+لیست گزارش‌ها برای مسئول آموزش امکان فیلتر بر اساس موارد زیر را دارد:
+
+```text
+school
+course
+teacher
+start_date
+end_date
+```
+
+مربی در لیست گزارش‌ها فقط گزارش‌های خودش را مشاهده می‌کند.
+
+---
+
+## چرخه گزارش جلسه
+
+چرخه اصلی گزارش به صورت زیر است:
+
+```text
+Session
+   │
+   ▼
+Teacher creates report
+   │
+   ▼
+Pending
+   │
+   ├── Approve ──► Approved
+   │                  │
+   │                  └── Locked
+   │
+   └── Reject ──► Rejected
+                       │
+                       ▼
+                 Teacher edits
+                       │
+                       ▼
+                    Pending
+```
+
+قواعد مهم:
+
+- گزارش آینده قابل ثبت نیست.
+- فقط مربی مسئول کلاس در تاریخ جلسه می‌تواند گزارش را ثبت کند.
+- گزارش تأییدشده قفل است.
+- گزارش ردشده قابل ویرایش و ارسال مجدد است.
+- مسئول آموزش نمی‌تواند محتوای گزارش را تغییر دهد.
+- رد گزارش بدون دلیل مجاز نیست.
+- مربی نمی‌تواند گزارش خودش را review کند.
+
+---
+
+## تست‌ها
+
+نوشتن تست برای مدل‌ها، serializerها، viewها و قواعد اصلی کسب‌وکار در پروژه انجام شده است.
+
+ساختار تست‌های فاز ۳:
+
+```text
+education/tests/
+├── session_tests/
+│   ├── test_models.py
+│   ├── test_serializers.py
+│   └── test_views.py
+│
+└── session_report_tests/
+    ├── test_models.py
+    ├── test_serializers.py
+    └── test_views.py
+```
+
+### تست‌های Session
+
+در مجموع **32 تست** برای Session نوشته شده است:
+
+- 10 تست مدل
+- 7 تست serializer
+- 15 تست view
+
+مواردی مانند:
+
+- قرار داشتن تاریخ جلسه داخل ترم
+- یکتا بودن شماره جلسه برای هر کلاس
+- جلوگیری از دو جلسه در یک روز برای یک کلاس
+- Soft Delete
+- دسترسی نقش‌ها به endpointهای جلسه
+
+### تست‌های SessionReport
+
+در مجموع **38 تست** برای SessionReport نوشته شده است:
+
+- 7 تست مدل
+- 17 تست serializer
+- 14 تست view
+
+موارد مهم:
+
+- ایجاد گزارش
+- یک گزارش برای هر جلسه
+- قاعده ۴۸ ساعت
+- محاسبه مجدد `is_late` پس از تغییر `updated_at`
+- جلوگیری از ثبت گزارش برای جلسه آینده
+- بررسی مسئول بودن مربی در تاریخ جلسه
+- محدودیت دسترسی مربی به گزارش‌های خودش
+- تأیید و رد گزارش
+- اجباری بودن دلیل رد
+- جلوگیری از تغییر محتوای گزارش توسط مسئول آموزش
+- قفل شدن گزارش تأییدشده
+- ویرایش و ارسال مجدد گزارش ردشده
+- تست چرخه کامل گزارش
+
+### اجرای تست‌ها
+
+اجرای کل تست‌ها:
 
 ```bash
 python manage.py test
 ```
 
-To run tests for a specific application:
+تست‌های Session:
 
 ```bash
-python manage.py test <app_name>
+python manage.py test education.tests.session_tests
 ```
 
-For example:
+تست‌های SessionReport:
 
 ```bash
-python manage.py test school
+python manage.py test education.tests.session_report_tests
 ```
-
-Tests cover the main business rules and role-based access boundaries required by the project.
 
 ---
 
-# Authentication
+## مستندات API
 
-The API uses **JWT authentication**.
+پروژه از `drf-spectacular` برای تولید مستندات OpenAPI استفاده می‌کند.
 
-A user must authenticate before accessing protected endpoints.
+Schema:
 
-The authenticated user's role determines which resources and operations are available to them.
+```http
+GET /api/schema/
+```
 
-The three supported roles are:
+Swagger UI:
 
 ```text
-Teacher
-Education Officer
-Finance Officer
+/api/docs/
 ```
 
----
-
-# Main Business Rules Implemented So Far
-
-## Roles
-
-Each user has one system role.
-
-A user must not be able to access operations belonging to another role.
-
----
-
-## Terms
-
-* A term has a start date and an end date.
-* Terms must not overlap.
-* A term has a type:
-
-  * Normal
-  * Summer
-
----
-
-## Classes
-
-* A class belongs to a school and a term.
-* A class has a session duration.
-* Valid session durations are only:
-
-  * 60 minutes
-  * 90 minutes
-  * 120 minutes
-* A class must belong to its term's date range.
-
----
-
-## Teacher-Class Relationships
-
-Teacher assignments contain a start date and an optional end date.
-
-Multiple teachers can teach the same class during different periods.
-
-Teacher assignment periods must not overlap.
-
-A teacher can access their own current and previous classes but not classes belonging to other teachers.
-
----
-
-# Known Limitations & Design Shortcuts
-
-The following limitations or simplifications are intentional at the current stage of the project:
-
-* The project currently covers only Phase 1 and Phase 2 requirements.
-* Session reporting has not been implemented yet.
-* Payroll calculation has not been implemented yet.
-* No frontend/web UI is included. The project is API-based.
-* Public user registration is not supported.
-* The project uses the simplified three-role system defined by the project requirements.
-* Features outside the project scope, such as students, parent accounts, notifications, support tickets, and temporary substitute teachers, are not implemented.
-* Some optional features from later phases are intentionally postponed.
-* The API and data model may change in future phases as new requirements are implemented.
-
----
-
-# API Testing
-
-The API can be tested using tools such as:
-
-* Postman
-* Django REST Framework browsable API
-* Any HTTP client
-
-The project does not require a separate frontend application.
-
----
-
-# Development Workflow
-
-The project is developed phase by phase.
-
-The main branches are:
+ReDoc:
 
 ```text
-main
-dev
+/api/redoc/
 ```
 
-The `dev` branch is used for development.
+---
 
-Completed phases are merged into `main` and tagged with the corresponding phase tag.
+## محدودیت‌ها و نکات
 
-Example:
+1. محاسبه حقوق در فاز ۳ پیاده‌سازی نشده و مربوط به فاز ۴ است.
+2. در تنظیمات فعلی، SQLite برای محیط توسعه استفاده می‌شود.
+3. رابط کاربری وب یا موبایل در Scope پروژه نیست و تمرکز روی API است.
+4. گزارش تأییدشده قابل ویرایش یا حذف نیست.
+5. گزارش ردشده برای ارسال مجدد محدودیت تعداد مشخصی ندارد.
+6. SessionReport دارای Soft Delete نیست؛ حذف گزارش از چرخه API پشتیبانی نمی‌شود.
+7. مدیریت جلسات در نسخه فعلی در اختیار مسئول آموزش است.
+8. Postman در پروژه وجود دارد، اما اجرای اصلی سیستم وابسته به Postman نیست.
+
+---
+
+## تصمیمات فنی
+
+### استفاده از اپلیکیشن `education`
+
+به جای ساخت اپلیکیشن جداگانه برای مدرسه، ترم، کلاس، جلسه و گزارش، موجودیت‌های آموزشی در اپلیکیشن `education` نگهداری شده‌اند.
+
+این ساختار باعث شده ارتباط بین:
 
 ```text
-phase-1
-phase-2
-phase-3
-phase-4
+School
+  ↓
+Term
+  ↓
+Course
+  ↓
+Session
+  ↓
+SessionReport
 ```
 
-The current completed version is tagged as:
+در یک دامنه منطقی قرار بگیرد.
+
+### استفاده از `SessionReport` به صورت OneToOne
+
+برای هر جلسه فقط یک گزارش وجود دارد؛ بنابراین رابطه `OneToOne` بین `Session` و `SessionReport` استفاده شده است.
+
+### محاسبه `is_late` به صورت property
+
+`is_late` در دیتابیس ذخیره نمی‌شود و هر بار از روی `session.date` و `updated_at` محاسبه می‌شود. این کار باعث می‌شود پس از ویرایش و ارسال مجدد گزارش، وضعیت تأخیر بر اساس آخرین زمان ویرایش محاسبه شود.
+
+### جداسازی تست‌ها
+
+برای هر بخش، تست‌های مدل، serializer و view در فایل‌های جدا قرار گرفته‌اند:
 
 ```text
-phase-2
+test_models.py
+test_serializers.py
+test_views.py
 ```
 
----
-
-# Future Phases
-
-## Phase 3 — Session Reports
-
-Planned functionality includes:
-
-* Session management.
-* Session reports.
-* Teacher report submission.
-* 48-hour submission rule.
-* Report approval/rejection.
-* Report editing and resubmission.
-* Education Officer review.
+این ساختار خوانایی تست‌ها و نگهداری آن‌ها را ساده‌تر می‌کند.
 
 ---
 
-## Phase 4 — Payroll & Final Integration
+## فازهای پروژه
 
-Planned functionality includes:
-
-* Teacher payroll rates.
-* Monthly payroll calculation.
-* Different session durations.
-* Summer-term coefficient.
-* Late report handling.
-* Payroll history.
-* Full end-to-end system testing.
+- [x] **Phase 1** — زیرساخت کاربران، نقش‌ها و احراز هویت
+- [x] **Phase 2** — مدیریت مدرسه، ترم، کلاس و تخصیص مربی
+- [x] **Phase 3** — مدیریت جلسات و چرخه گزارش جلسه
+- [ ] **Phase 4** — محاسبه حقوق، یکپارچه‌سازی نهایی و تکمیل پروژه
 
 ---
 
-# Project Requirements Reference
+## وضعیت نهایی فاز ۳
 
-The official project requirements define four technical phases after the initial Q&A phase.
+**Current Version:** Phase 3  
+**Status:** ✅ Phase 3 Completed
 
-The first two completed phases focus on:
+تمرکز فاز ۳ روی پیاده‌سازی و تست چرخه کامل گزارش جلسه بوده است:
 
-1. System foundation, users, roles and authentication.
-2. School, term, class and teacher-class management.
+```text
+ثبت جلسه
+   ↓
+ثبت گزارش توسط مربی
+   ↓
+Pending
+   ↓
+Approve / Reject
+   ↓
+در صورت Reject:
+ویرایش و ارسال مجدد
+   ↓
+Pending
+   ↓
+Approve
+```
 
-Testing is mandatory throughout the project, especially for model behavior, role-based access boundaries, and the main business rules of each phase.
-
----
-
-# License
-
-This project was developed as part of the **Maktab 141 Python Bootcamp Final Project**.
+در پایان فاز ۳، منطق اصلی Session و SessionReport، کنترل دسترسی نقش‌ها، اعتبارسنجی‌ها، چرخه تأیید/رد و قاعده ۴۸ ساعت تحت تست قرار گرفته‌اند.
