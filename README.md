@@ -1,213 +1,666 @@
 # Class Management System
 
-Django REST API for managing classes, session reports, and instructor payroll calculation.
+Django REST API برای مدیریت مدارس، ترم‌ها، کلاس‌ها، جلسات، گزارش جلسات و در ادامه محاسبه حقوق مربیان.
 
-# Teacher and Payroll Management System — Phase 2
+## وضعیت پروژه
+
+**نسخه فعلی: پایان فاز ۳**
+
+در این نسخه، فازهای ۱ تا ۳ پیاده‌سازی شده‌اند:
+
+- فاز ۱: زیرساخت کاربران، نقش‌ها و احراز هویت JWT
+- فاز ۲: مدیریت مدرسه، ترم، کلاس و تخصیص مربی
+- فاز ۳: مدیریت جلسات و چرخه کامل گزارش جلسه
+
+فاز ۴ شامل محاسبه حقوق مربیان در ادامه پروژه خواهد بود.
 
 ---
 
-## 📋 فهرست مطالب
+## فهرست مطالب
 
-* [معرفی پروژه](#معرفی-پروژه)
-* [قابلیت‌های پیاده‌سازی‌شده](#قابلیتهای-پیادهسازی‌شده)
-* [ساختار پروژه](#ساختار-پروژه)
-* [نصب و راه‌اندازی](#نصب-و-راهاندازی)
-* [راهنمای استفاده](#راهنمای-استفاده)
-* [API Endpoints](#api-endpoints)
-* [تست‌ها](#تستها)
-* [محدودیت‌ها و نکات](#محدودیتها-و-نکات)
-* [تصمیمات فنی](#تصمیمات-فنی)
-* [فازهای بعدی](#فازهای-بعدی)
+- [معرفی پروژه](#معرفی-پروژه)
+- [نقش‌های سیستم](#نقشهای-سیستم)
+- [قابلیت‌های پیاده‌سازی‌شده](#قابلیتهای-پیادهسازی‌شده)
+- [ساختار پروژه](#ساختار-پروژه)
+- [نصب و راه‌اندازی](#نصب-و-راهاندازی)
+- [احراز هویت](#احراز-هویت)
+- [API Endpoints](#api-endpoints)
+- [چرخه گزارش جلسه](#چرخه-گزارش-جلسه)
+- [تست‌ها](#تستها)
+- [محدودیت‌ها و نکات](#محدودیتها-و-نکات)
+- [تصمیمات فنی](#تصمیمات-فنی)
+- [فازهای پروژه](#فازهای-پروژه)
 
 ---
 
 ## معرفی پروژه
 
-این پروژه یک سیستم مدیریت مربیان و حقوق است که در چهار فاز توسعه می‌یابد.
+این پروژه یک سیستم مدیریت آموزشی و گزارش‌دهی کلاس است که در آن:
 
-اهداف اصلی پروژه عبارت‌اند از:
+1. مسئول آموزش مدرسه، ترم و کلاس را مدیریت می‌کند.
+2. مربی به کلاس اختصاص داده می‌شود.
+3. جلسات کلاس از قبل توسط مسئول آموزش ثبت می‌شوند.
+4. مربی بعد از برگزاری جلسه گزارش آن را ثبت می‌کند.
+5. مسئول آموزش گزارش را بررسی، تأیید یا رد می‌کند.
+6. گزارش ردشده می‌تواند توسط همان مربی ویرایش و دوباره ارسال شود.
+7. در فاز ۴، گزارش‌های تأییدشده مبنای محاسبه حقوق خواهند بود.
 
-* مدیریت کاربران با نقش‌های مختلف:
-  * مربی (`teacher`)
-  * کارشناس آموزش (`education_officer`)
-  * کارشناس مالی (`finance_officer`)
-* ثبت و مدیریت جلسات کلاسی
-* تأیید و رد گزارش‌های جلسات
-* محاسبه و پردازش حقوق مربیان
+API با Django REST Framework پیاده‌سازی شده و احراز هویت با JWT انجام می‌شود.
 
-> **وضعیت فعلی:** فاز ۲ — مدیریت مدارس، ترم‌ها، کلاس‌ها و تخصیص مربیان
+---
+
+## نقش‌های سیستم
+
+سیستم سه نقش اصلی دارد:
+
+- `teacher` — مربی
+- `education_officer` — مسئول آموزش
+- `finance_officer` — مسئول مالی
+
+هر کاربر فقط یک نقش دارد و دسترسی endpointها بر اساس نقش کنترل می‌شود.
 
 ---
 
 ## قابلیت‌های پیاده‌سازی‌شده
 
-### ✅ فاز ۱: زیرساخت کاربری و احراز هویت
-* **مدل کاربری سفارشی (Custom User Model):** ارث‌بری از `AbstractUser` همراه با فیلدهای نقش (`role`)، شماره تماس (`phone_number`) و شماره اضطراری (`emergency_number`).
-* **احراز هویت JWT:** استفاده از `simplejwt` برای مدیریت نشست‌ها و توکن‌ها.
-* **کنترل دسترسی مبتنی بر نقش (RBAC):** پیاده‌سازی پرمیشن‌های اختصاصی مانند `IsTeacher`، `IsEducationOfficer` و `IsFinanceOfficer`.
+### فاز ۱ — کاربران و احراز هویت
 
-### ✅ فاز ۲: مدیریت مدارس، ترم‌ها و کلاس‌ها
-* **اپلیکیشن مدارس (`schools`):**
-  * ایجاد مدل `School` دارای فیلدهای `name` و `address`.
-  * مدیریت مدارس فعال با استفاده از منطق Soft Delete.
-* **اپلیکیشن ترم‌ها (`terms`):**
-  * ایجاد مدل `Term` دارای فیلدهای `name`، `start_date` و `end_date` برای مشخص کردن بازه‌های آموزشی.
-* **اپلیکیشن کلاس‌ها (`classes`):**
-  * ایجاد مدل `Class` (شامل فیلدهای ارتباط با مدرسه و ترم جاری).
-  * ایجاد مدل واسط `ClassTeacher` برای انتساب مربیان به کلاس‌ها همراه با نرخ پرداختی ساعتی (`hourly_rate`) و بازه زمانی فعالیت مربی (`start_date` و `end_date`).
-* **منطق جلوگیری از همپوشانی زمانی مربیان (Overlap Validation):**
-  * پیاده‌سازی متد `clean()` در سطح مدل و سریالایزر در `ClassTeacher` جهت جلوگیری از انتساب همزمان بیش از یک مربی به یک کلاس در بازه‌های زمانی متداخل (با در نظر گرفتن بازه‌های بدون تاریخ پایان یا `None`).
+- Custom User Model بر پایه `AbstractUser`
+- نقش‌های `teacher`، `education_officer` و `finance_officer`
+- اطلاعات تماس مربی شامل شماره تماس و شماره تماس اضطراری
+- احراز هویت JWT با `djangorestframework-simplejwt`
+- endpoint برای مشاهده کاربر واردشده
+- کنترل دسترسی مبتنی بر نقش
+- management command برای ساخت کاربر:
 
-### 🗑️ زیرساخت Soft Delete
-پیاده‌سازی متد اختصاصی حذف نرم در مدل پایه `SoftDeleteModel` در اپ `core`:
-* فیلتر خودکار رکوردهای حذف‌نشده از طریق چرخه‌ی پیش‌فرض `objects` (با استفاده از `SoftDeleteManager`).
-* دسترسی به تمام رکوردهای حذف‌شده و حذف‌نشده با استفاده از `all_objects`.
-* پیاده‌سازی متد `soft_delete()` برای تغییر فیلد `is_deleted` به `True` و ثبت زمان حذف در `deleted_at` بدون حذف فیزیکی از دیتابیس.
+```bash
+python manage.py create_user --role=teacher
+```
+
+---
+
+### فاز ۲ — مدرسه، ترم، کلاس و تخصیص مربی
+
+مدل‌های اصلی فاز ۲ در اپ `education` قرار دارند:
+
+- `School`
+- `Term`
+- `Course`
+- `CourseTeacher`
+
+قابلیت‌های اصلی:
+
+- ایجاد، مشاهده و ویرایش مدرسه
+- ایجاد و مدیریت ترم
+- ارتباط کلاس با مدرسه و ترم
+- تعیین مدت جلسه کلاس
+- اختصاص مربی به کلاس با `start_date` و `end_date`
+- پشتیبانی از چند مربی برای یک کلاس در بازه‌های زمانی مختلف
+- جلوگیری از همپوشانی بازه‌های مسئولیت مربیان
+- نمایش کلاس‌های مربوط به مربی
+- Soft Delete برای مدل‌هایی که از `SoftDeleteModel` استفاده می‌کنند
+
+---
+
+### فاز ۳ — جلسات و گزارش جلسات
+
+فاز ۳ در اپ `education` پیاده‌سازی شده و شامل دو مدل اصلی است:
+
+#### `Session`
+
+هر جلسه به یک کلاس (`Course`) متصل است و شامل:
+
+- `session_number`
+- `date`
+- `course_obj`
+
+قواعد اصلی:
+
+- شماره جلسه برای هر کلاس یکتا است.
+- برای یک کلاس، دو جلسه در یک تاریخ ثبت نمی‌شود.
+- تاریخ جلسه باید داخل بازه ترم باشد.
+- جلسات توسط مسئول آموزش ایجاد و مدیریت می‌شوند.
+- جلسه آینده می‌تواند از قبل برنامه‌ریزی شود.
+- حذف جلسه به صورت Soft Delete انجام می‌شود.
+
+#### `SessionReport`
+
+هر جلسه حداکثر یک گزارش دارد و شامل:
+
+- `session`
+- `teacher`
+- `summary`
+- `present_count`
+- `absent_count`
+- `status`
+- `rejection_reason`
+- `reviewed_by`
+- `created_at`
+- `updated_at`
+
+وضعیت‌های گزارش:
+
+- `pending`
+- `approved`
+- `rejected`
+
+قواعد اصلی گزارش:
+
+- فقط مربی می‌تواند گزارش ایجاد کند.
+- مربی فقط برای کلاسی که در تاریخ جلسه مسئول آن بوده می‌تواند گزارش ثبت کند.
+- ثبت گزارش برای جلسه آینده مجاز نیست.
+- مربی نمی‌تواند گزارش مربی دیگر را مشاهده یا ویرایش کند.
+- مسئول آموزش می‌تواند گزارش‌ها را مشاهده و بررسی کند.
+- مسئول آموزش فقط وضعیت و توضیح بررسی را تغییر می‌دهد و محتوای گزارش را تغییر نمی‌دهد.
+- مربی نمی‌تواند گزارش خودش را تأیید یا رد کند.
+- رد کردن گزارش نیازمند `rejection_reason` است.
+- گزارش تأییدشده قابل ویرایش نیست.
+- گزارش ردشده توسط مربی قابل ویرایش و ارسال مجدد است.
+- بعد از ارسال مجدد، وضعیت گزارش دوباره `pending` می‌شود.
+- گزارش به صورت `OneToOne` به جلسه متصل است؛ بنابراین برای هر جلسه فقط یک گزارش وجود دارد.
+
+### قاعده ۴۸ ساعت
+
+ویژگی `is_late` در مدل `SessionReport` به صورت property محاسبه می‌شود.
+
+مبنای محاسبه:
+
+```text
+session.date + 48 hours
+```
+
+اگر `updated_at` گزارش **بیشتر از** این زمان باشد:
+
+```text
+is_late = True
+```
+
+و اگر دقیقاً در مرز ۴۸ ساعت باشد:
+
+```text
+is_late = False
+```
+
+`updated_at` زمان آخرین ویرایش گزارش است؛ بنابراین در ویرایش و ارسال مجدد نیز وضعیت تأخیر بر اساس آخرین ویرایش دوباره محاسبه می‌شود.
 
 ---
 
 ## ساختار پروژه
+
 ```text
 project_root/
 │
-├── config/                         # تنظیمات پروژه
+├── config/
 │   ├── settings.py
 │   ├── urls.py
+│   ├── asgi.py
 │   └── wsgi.py
 │
-├── core/                           # ابزارها و مدل‌های پایه مشترک
-│   ├── models.py                   # SoftDeleteModel و SoftDeleteManager
-│   └── views.py
+├── core/
+│   └── models.py
+│       ├── BaseModel
+│       ├── SoftDeleteModel
+│       └── SoftDeleteManager
 │
-├── users/                          # مدیریت کاربران و احراز هویت
-│   ├── models.py                   # مدل User سفارشی
-│   ├── serializers.py              # UserSerializer
-│   ├── views.py                    # Login, Me endpoints
-│   ├── permissions.py              # IsTeacher, IsEducationOfficer, ...
-│   ├── admin.py                    # CustomUserAdmin
-│   └── tests/
-│       ├── test_models.py
-│       ├── test_authentication.py
-│       └── test_permissions.py
-│
-├── schools/                        # مدیریت مدارس (فاز ۲)
-│   ├── models.py                   # مدل School (ارث‌بری از SoftDeleteModel)
-│   ├── serializers.py              # SchoolSerializer
-│   ├── views.py                    # SchoolListView, SchoolDetailView
-│   ├── admin.py                    # مدیریت مدارس در پنل ادمین
-│   └── tests/                      # تست‌های اختصاصی مدارس
-│       ├── test_models.py
-│       ├── test_serializers.py
-│       └── test_views.py
-│
-├── terms/                          # مدیریت ترم‌ها (فاز ۲)
-│   ├── models.py                   # مدل Term (ارث‌بری از SoftDeleteModel)
-│   ├── serializers.py              # TermSerializer
-│   ├── views.py                    # TermListView, TermDetailView
-│   └── admin.py
-│
-├── classes/                        # مدیریت کلاس‌ها و مربیان (فاز ۲)
-│   ├── models.py                   # مدل‌های Class و ClassTeacher
-│   ├── serializers.py              # سریالایزرهای Class و ClassTeacher
-│   ├── views.py                    # ClassListView, ClassDetailView, ClassTeacherView
+├── users/
+│   ├── models.py
+│   ├── serializers.py
+│   ├── views.py
+│   ├── permissions.py
+│   ├── urls.py
 │   ├── admin.py
-│   └── tests/                      # تست‌های جامع همپوشانی و عملکرد
-│       ├── test_models.py
-│       ├── test_serializers.py
-│       └── test_views.py
+│   ├── management/
+│   │   └── commands/
+│   │       └── create_user.py
+│   └── tests/
 │
+├── education/
+│   ├── models/
+│   │   ├── school.py
+│   │   ├── term.py
+│   │   ├── course.py
+│   │   ├── session.py
+│   │   └── session_report.py
+│   │
+│   ├── serializers/
+│   │   ├── school.py
+│   │   ├── term.py
+│   │   ├── course.py
+│   │   ├── session.py
+│   │   └── session_report.py
+│   │
+│   ├── views/
+│   │   ├── school.py
+│   │   ├── term.py
+│   │   ├── course.py
+│   │   ├── session.py
+│   │   └── session_report.py
+│   │
+│   ├── migrations/
+│   └── tests/
+│       ├── school_tests/
+│       ├── term_tests/
+│       ├── course_tests/
+│       ├── session_tests/
+│       └── session_report_tests/
+│
+├── postman/
+├── .postman/
 ├── manage.py
 ├── requirements.txt
+├── db.sqlite3
 └── README.md
+```
 
 ---
 
 ## نصب و راه‌اندازی
 
-### پیش‌نیازها
-* Python 3.10+
-* Django 4.2+
-* Django REST Framework 3.14+
-* djangorestframework-simplejwt 5.3+
+### پیش‌نیاز
 
-### مراحل نصب و راه‌اندازی مشابه فازهای قبلی است:
-1. فعال‌سازی محیط مجازی و نصب وابستگی‌ها با `pip install -r requirements.txt`.
-2. اعمال مهاجرت‌ها با دستورهای `python manage.py makemigrations` و `python manage.py migrate`.
-3. راه‌اندازی سرور با `python manage.py runserver`.
+- Python 3.10+
+- Django
+- Django REST Framework
+- djangorestframework-simplejwt
+- drf-spectacular
+
+### نصب وابستگی‌ها
+
+```bash
+pip install -r requirements.txt
+```
+
+### اعمال migrationها
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+### ساخت کاربر
+
+نمونه:
+
+```bash
+python manage.py create_user --role=teacher
+```
+
+نقش‌های معتبر:
+
+```text
+teacher
+education_officer
+finance_officer
+```
+
+### اجرای سرور
+
+```bash
+python manage.py runserver
+```
+
+در تنظیمات فعلی پروژه، دیتابیس توسعه `SQLite` است و فایل آن `db.sqlite3` است.
 
 ---
 
-## راهنمای استفاده و API Endpoints (فاز ۲)
+## احراز هویت
 
-تمامی مسیرهای فاز ۲ نیاز به احراز هویت JWT با نقش مناسب (مثلاً کارشناس آموزش یا `education_officer`) دارند.
+احراز هویت API با JWT انجام می‌شود.
 
-| متد | مسیر (Endpoint) | توضیحات |
-| :--- | :--- | :--- |
-| `GET` | `/api/schools/` | لیست تمامی مدارس فعال |
-| `POST` | `/api/schools/` | ثبت مدرسه جدید |
-| `GET` | `/api/schools/<id>/` | جزئیات یک مدرسه خاص |
-| `PUT` | `/api/schools/<id>/` | به‌روزرسانی کامل اطلاعات مدرسه |
-| `DELETE` | `/api/schools/<id>/` | حذف نرم (Soft Delete) مدرسه |
-| `GET` | `/api/terms/` | لیست ترم‌های ثبت‌شده |
-| `POST` | `/api/terms/` | ثبت ترم جدید |
-| `GET` | `/api/classes/` | لیست کلاس‌ها (با فیلترهای اختیاری `school` و `term`) |
-| `POST` | `/api/classes/` | ایجاد کلاس جدید |
-| `GET` | `/api/classes/<id>/` | جزئیات کلاس به همراه مشخصات مربی جاری (`current_teacher`) |
-| `POST` | `/api/classes/<id>/teachers/` | انتساب یک مربی جدید به کلاس با رعایت عدم همپوشانی زمانی |
+### دریافت توکن
+
+```http
+POST /api/users/login/
+```
+
+### Refresh Token
+
+```http
+POST /api/users/token/refresh/
+```
+
+برای endpointهای محافظت‌شده باید access token را به صورت زیر ارسال کرد:
+
+```http
+Authorization: Bearer <access_token>
+```
+
+### کاربر فعلی
+
+```http
+GET /api/users/me/
+```
+
+### پروفایل
+
+```http
+GET /api/users/profile/
+```
+
+---
+
+## API Endpoints
+
+Base URL:
+
+```text
+/api/
+```
+
+### کاربران
+
+| Method | Endpoint | توضیح |
+|---|---|---|
+| `POST` | `/api/users/login/` | دریافت JWT |
+| `POST` | `/api/users/token/refresh/` | دریافت access token جدید |
+| `GET` | `/api/users/me/` | اطلاعات کاربر واردشده |
+| `GET` | `/api/users/profile/` | مشاهده پروفایل |
+| `GET` | `/api/users/dashboard/teacher/` | داشبورد مربی |
+| `GET` | `/api/users/dashboard/education-officer/` | داشبورد مسئول آموزش |
+| `GET` | `/api/users/dashboard/finance-officer/` | داشبورد مسئول مالی |
+
+### آموزش — مدرسه
+
+| Method | Endpoint | توضیح |
+|---|---|---|
+| `GET` | `/api/education/schools/` | لیست مدارس |
+| `POST` | `/api/education/schools/` | ایجاد مدرسه |
+| `GET` | `/api/education/schools/<id>/` | جزئیات مدرسه |
+| `PUT` | `/api/education/schools/<id>/` | ویرایش مدرسه |
+| `DELETE` | `/api/education/schools/<id>/` | حذف نرم |
+
+### آموزش — ترم
+
+| Method | Endpoint | توضیح |
+|---|---|---|
+| `GET` | `/api/education/terms/` | لیست ترم‌ها |
+| `POST` | `/api/education/terms/` | ایجاد ترم |
+| `GET` | `/api/education/terms/<id>/` | جزئیات ترم |
+| `PUT` | `/api/education/terms/<id>/` | ویرایش ترم |
+| `DELETE` | `/api/education/terms/<id>/` | حذف نرم |
+
+### آموزش — کلاس و مربی
+
+| Method | Endpoint | توضیح |
+|---|---|---|
+| `GET` | `/api/education/courses/` | لیست کلاس‌ها |
+| `POST` | `/api/education/courses/` | ایجاد کلاس |
+| `GET` | `/api/education/courses/<id>/` | جزئیات کلاس |
+| `PUT` | `/api/education/courses/<id>/` | ویرایش کلاس |
+| `DELETE` | `/api/education/courses/<id>/` | حذف نرم |
+| `GET` | `/api/education/courses/teachers/` | لیست تخصیص‌های مربی |
+| `POST` | `/api/education/courses/teachers/` | تخصیص مربی |
+| `GET` | `/api/education/courses/teachers/<id>/` | جزئیات تخصیص |
+| `PUT` | `/api/education/courses/teachers/<id>/` | ویرایش تخصیص |
+| `DELETE` | `/api/education/courses/teachers/<id>/` | حذف تخصیص |
+
+### آموزش — جلسات
+
+| Method | Endpoint | توضیح |
+|---|---|---|
+| `GET` | `/api/education/sessions/` | لیست جلسات |
+| `POST` | `/api/education/sessions/` | ایجاد جلسه |
+| `GET` | `/api/education/sessions/<id>/` | جزئیات جلسه |
+| `PUT` | `/api/education/sessions/<id>/` | ویرایش جلسه |
+| `DELETE` | `/api/education/sessions/<id>/` | حذف نرم جلسه |
+
+مدیریت جلسات در نسخه فعلی فقط برای `education_officer` مجاز است.
+
+### آموزش — گزارش جلسات
+
+| Method | Endpoint | توضیح |
+|---|---|---|
+| `GET` | `/api/education/session-reports/` | لیست گزارش‌ها |
+| `POST` | `/api/education/session-reports/` | ثبت گزارش توسط مربی |
+| `GET` | `/api/education/session-reports/<id>/` | مشاهده گزارش |
+| `PUT` | `/api/education/session-reports/<id>/` | ویرایش گزارش توسط مربی |
+| `PATCH` | `/api/education/session-reports/<id>/review/` | تأیید یا رد توسط مسئول آموزش |
+
+لیست گزارش‌ها برای مسئول آموزش امکان فیلتر بر اساس موارد زیر را دارد:
+
+```text
+school
+course
+teacher
+start_date
+end_date
+```
+
+مربی در لیست گزارش‌ها فقط گزارش‌های خودش را مشاهده می‌کند.
+
+---
+
+## چرخه گزارش جلسه
+
+چرخه اصلی گزارش به صورت زیر است:
+
+```text
+Session
+   │
+   ▼
+Teacher creates report
+   │
+   ▼
+Pending
+   │
+   ├── Approve ──► Approved
+   │                  │
+   │                  └── Locked
+   │
+   └── Reject ──► Rejected
+                       │
+                       ▼
+                 Teacher edits
+                       │
+                       ▼
+                    Pending
+```
+
+قواعد مهم:
+
+- گزارش آینده قابل ثبت نیست.
+- فقط مربی مسئول کلاس در تاریخ جلسه می‌تواند گزارش را ثبت کند.
+- گزارش تأییدشده قفل است.
+- گزارش ردشده قابل ویرایش و ارسال مجدد است.
+- مسئول آموزش نمی‌تواند محتوای گزارش را تغییر دهد.
+- رد گزارش بدون دلیل مجاز نیست.
+- مربی نمی‌تواند گزارش خودش را review کند.
 
 ---
 
 ## تست‌ها
 
-در فاز ۲، ساختار فایل‌های تست از حالت تک‌فایلی به ساختار ماژولار تفکیک شد و تست‌های واحد جامع در سطح مدل‌ها، سریالایزرها و ویوها پیاده‌سازی شدند.
+نوشتن تست برای مدل‌ها، serializerها، viewها و قواعد اصلی کسب‌وکار در پروژه انجام شده است.
 
-### سناریوهای تستی پوشش داده‌شده:
+ساختار تست‌های فاز ۳:
 
-#### ۱. تست‌های مدارس (`schools/tests/`)
-* **تست‌های مدل:** بررسی صحت فیلدهای مدل `School` و اطمینان از عملکرد درست متد `soft_delete()` (تغییر وضعیت `is_deleted` به جای حذف فیزیکی).
-* **تست‌های سریالایزر:** بررسی اعتبار سنجی ورودی‌ها و ساختار خروجی داده‌ها.
-* **تست‌های API:** دسترسی‌سنجی متدهای `GET` ،`POST` و `DELETE` برای کاربران مهمان، مربیان و کارشناسان آموزش.
+```text
+education/tests/
+├── session_tests/
+│   ├── test_models.py
+│   ├── test_serializers.py
+│   └── test_views.py
+│
+└── session_report_tests/
+    ├── test_models.py
+    ├── test_serializers.py
+    └── test_views.py
+```
 
-#### ۲. تست‌های کلاس و همپوشانی مربیان (`classes/tests/`)
-* **تست اعتبارسنجی همپوشانی بازه‌های زمانی (Overlap Validation):**
-  * سناریوی همپوشانی کامل دو بازه زمانی.
-  * سناریوی ثبت بازه کاری جدید در شرایطی که بازه مربی قبلی فاقد تاریخ پایان (`end_date=None`) است.
-  * صحت ثبت مربیان در بازه‌های زمانی متوالی بدون همپوشانی.
-* **تست‌های API:** بررسی فیلتر کردن کلاس‌ها بر اساس ترم و مدرسه و دسترسی مربی جاری در خروجی سریالایزر کلاس.
+### تست‌های Session
 
-### نحوه اجرای تست‌ها
-برای اجرای کامل تست‌های سیستم:
-bash
+در مجموع **32 تست** برای Session نوشته شده است:
+
+- 10 تست مدل
+- 7 تست serializer
+- 15 تست view
+
+مواردی مانند:
+
+- قرار داشتن تاریخ جلسه داخل ترم
+- یکتا بودن شماره جلسه برای هر کلاس
+- جلوگیری از دو جلسه در یک روز برای یک کلاس
+- Soft Delete
+- دسترسی نقش‌ها به endpointهای جلسه
+
+### تست‌های SessionReport
+
+در مجموع **38 تست** برای SessionReport نوشته شده است:
+
+- 7 تست مدل
+- 17 تست serializer
+- 14 تست view
+
+موارد مهم:
+
+- ایجاد گزارش
+- یک گزارش برای هر جلسه
+- قاعده ۴۸ ساعت
+- محاسبه مجدد `is_late` پس از تغییر `updated_at`
+- جلوگیری از ثبت گزارش برای جلسه آینده
+- بررسی مسئول بودن مربی در تاریخ جلسه
+- محدودیت دسترسی مربی به گزارش‌های خودش
+- تأیید و رد گزارش
+- اجباری بودن دلیل رد
+- جلوگیری از تغییر محتوای گزارش توسط مسئول آموزش
+- قفل شدن گزارش تأییدشده
+- ویرایش و ارسال مجدد گزارش ردشده
+- تست چرخه کامل گزارش
+
+### اجرای تست‌ها
+
+اجرای کل تست‌ها:
+
+```bash
 python manage.py test
+```
+
+تست‌های Session:
+
+```bash
+python manage.py test education.tests.session_tests
+```
+
+تست‌های SessionReport:
+
+```bash
+python manage.py test education.tests.session_report_tests
+```
 
 ---
 
-## محدودیت‌ها و نکات (فاز ۲)
+## مستندات API
 
-### ⚠️ نکات پیاده‌سازی
-1. **عدم امکان حذف فیزیکی:** در اپلیکیشن‌های `schools` ،`terms` و `classes` امکان حذف دائمی (Hard Delete) از طریق وب‌سرویس وجود ندارد و حذف‌ها همگی به صورت سیستمی و از نوع Soft Delete هستند.
-2. **مدیریت مربیان جاری:** متد `get_current_teacher` در سریالایزر کلاس، تاریخ جاری سرور را ملاک مقایسه با فیلدهای `start_date` و `end_date` در مدل واسط قرار می‌دهد تا مربی فعال را شناسایی و بازگرداند.
-3. **عدم حذف مربیان:** بر اساس الزامات امنیتی و سیستمی، مدل کاربران (`User`) فاقد فیلد حذف نرم بوده و غیرقابل حذف تعریف شده است.
+پروژه از `drf-spectacular` برای تولید مستندات OpenAPI استفاده می‌کند.
+
+Schema:
+
+```http
+GET /api/schema/
+```
+
+Swagger UI:
+
+```text
+/api/docs/
+```
+
+ReDoc:
+
+```text
+/api/redoc/
+```
+
+---
+
+## محدودیت‌ها و نکات
+
+1. محاسبه حقوق در فاز ۳ پیاده‌سازی نشده و مربوط به فاز ۴ است.
+2. در تنظیمات فعلی، SQLite برای محیط توسعه استفاده می‌شود.
+3. رابط کاربری وب یا موبایل در Scope پروژه نیست و تمرکز روی API است.
+4. گزارش تأییدشده قابل ویرایش یا حذف نیست.
+5. گزارش ردشده برای ارسال مجدد محدودیت تعداد مشخصی ندارد.
+6. SessionReport دارای Soft Delete نیست؛ حذف گزارش از چرخه API پشتیبانی نمی‌شود.
+7. مدیریت جلسات در نسخه فعلی در اختیار مسئول آموزش است.
+8. Postman در پروژه وجود دارد، اما اجرای اصلی سیستم وابسته به Postman نیست.
 
 ---
 
 ## تصمیمات فنی
 
-### چرا تفکیک تست‌ها به ساختار دایرکتوری؟
-با افزایش پیچیدگی پروژه در فاز ۲ و اضافه شدن منطق‌های اعتبارسنجی همپوشانی، تقسیم تست‌ها به فایل‌های اختصاصی `test_models.py`، `test_serializers.py` و `test_views.py` باعث خوانایی بهتر، نگهداری آسان‌تر و تفکیک وظایف تست‌ها گردید.
+### استفاده از اپلیکیشن `education`
+
+به جای ساخت اپلیکیشن جداگانه برای مدرسه، ترم، کلاس، جلسه و گزارش، موجودیت‌های آموزشی در اپلیکیشن `education` نگهداری شده‌اند.
+
+این ساختار باعث شده ارتباط بین:
+
+```text
+School
+  ↓
+Term
+  ↓
+Course
+  ↓
+Session
+  ↓
+SessionReport
+```
+
+در یک دامنه منطقی قرار بگیرد.
+
+### استفاده از `SessionReport` به صورت OneToOne
+
+برای هر جلسه فقط یک گزارش وجود دارد؛ بنابراین رابطه `OneToOne` بین `Session` و `SessionReport` استفاده شده است.
+
+### محاسبه `is_late` به صورت property
+
+`is_late` در دیتابیس ذخیره نمی‌شود و هر بار از روی `session.date` و `updated_at` محاسبه می‌شود. این کار باعث می‌شود پس از ویرایش و ارسال مجدد گزارش، وضعیت تأخیر بر اساس آخرین زمان ویرایش محاسبه شود.
+
+### جداسازی تست‌ها
+
+برای هر بخش، تست‌های مدل، serializer و view در فایل‌های جدا قرار گرفته‌اند:
+
+```text
+test_models.py
+test_serializers.py
+test_views.py
+```
+
+این ساختار خوانایی تست‌ها و نگهداری آن‌ها را ساده‌تر می‌کند.
 
 ---
 
-## فازهای بعدی
+## فازهای پروژه
 
-* [x] **Phase 1** — زیرساخت و احراز هویت
-* [x] **Phase 2** — مدیریت مدارس، ترم‌ها، کلاس‌ها و تخصیص مربیان
-* [ ] **Phase 3** — ثبت جلسات و سیستم تایید/رد گزارش‌ها
-* [ ] **Phase 4** — محاسبه حقوق و پرداختی مربیان
+- [x] **Phase 1** — زیرساخت کاربران، نقش‌ها و احراز هویت
+- [x] **Phase 2** — مدیریت مدرسه، ترم، کلاس و تخصیص مربی
+- [x] **Phase 3** — مدیریت جلسات و چرخه گزارش جلسه
+- [ ] **Phase 4** — محاسبه حقوق، یکپارچه‌سازی نهایی و تکمیل پروژه
 
 ---
 
-## وضعیت پروژه
+## وضعیت نهایی فاز ۳
 
-**Current Version:** Phase 2
-**Status:** 🚧 In Development
+**Current Version:** Phase 3  
+**Status:** ✅ Phase 3 Completed
+
+تمرکز فاز ۳ روی پیاده‌سازی و تست چرخه کامل گزارش جلسه بوده است:
+
+```text
+ثبت جلسه
+   ↓
+ثبت گزارش توسط مربی
+   ↓
+Pending
+   ↓
+Approve / Reject
+   ↓
+در صورت Reject:
+ویرایش و ارسال مجدد
+   ↓
+Pending
+   ↓
+Approve
+```
+
+در پایان فاز ۳، منطق اصلی Session و SessionReport، کنترل دسترسی نقش‌ها، اعتبارسنجی‌ها، چرخه تأیید/رد و قاعده ۴۸ ساعت تحت تست قرار گرفته‌اند.
