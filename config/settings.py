@@ -166,4 +166,4 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # Custom user model
-AUTH_USER_MODEL = 'users.USER'
+AUTH_USER_MODEL = 'users.User'
