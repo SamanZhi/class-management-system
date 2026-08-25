@@ -115,9 +115,13 @@ class SessionReportListCreateView(APIView):
         )
 
         if serializer.is_valid():
-            serializer.save(
-                teacher=request.user
+            report = serializer.save(
+                teacher=request.user,
             )
+
+            report.mark_teacher_edit()
+            report.late_reference_at = report.teacher_edited_at
+            report.save()
 
             return Response(
                 serializer.data,
@@ -186,38 +190,28 @@ class SessionReportDetailView(APIView):
             status=status.HTTP_200_OK,
         )
 
-    def put(self, request, pk):
-        if request.user.role != 'teacher':
+    def put(self, request, pk, *args, **kwargs):
+        try:
+            report = self.get_object(pk)
+        except SessionReport.DoesNotExist:
             return Response(
-                {
-                    'detail': 'Only teachers can update session reports.'
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        report = self.get_object(pk)
-
-        if report is None:
-            return Response(
-                {'detail': 'Session report not found.'},
+                {"detail": "Report not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if report.teacher_id != request.user.id:
+        if report.teacher != request.user:
             return Response(
-                {'detail': 'You cannot edit this report.'},
+                {"detail": "You are not allowed to edit this report."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
         if report.status == SessionReport.Status.APPROVED:
             return Response(
-                {
-                    'detail': (
-                        'Approved reports cannot be edited.'
-                    )
-                },
+                {"detail": "Approved reports cannot be edited."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        was_rejected = report.status == SessionReport.Status.REJECTED
 
         serializer = SessionReportSerializer(
             report,
@@ -226,29 +220,30 @@ class SessionReportDetailView(APIView):
             context={'request': request},
         )
 
-        if serializer.is_valid():
-            if report.status == SessionReport.Status.REJECTED:
-                serializer.save(
-                    teacher=request.user,
-                    status=SessionReport.Status.PENDING,
-                    rejection_reason='',
-                    reviewed_by=None,
-                )
-            else:
-                serializer.save(
-                    teacher=request.user,
-                )
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response(
-                serializer.data,
-                status=status.HTTP_200_OK,
-            )
+        report = serializer.save()
+
+        if was_rejected:
+            report.status = SessionReport.Status.PENDING
+            report.rejection_reason = ''
+            report.reviewed_by = None
+            report.mark_teacher_edit()
+            report.late_reference_at = report.teacher_edited_at
+            report.save(update_fields=[
+                'status',
+                'rejection_reason',
+                'reviewed_by',
+                'teacher_edited_at',
+                'total_late_hours',
+                'late_reference_at',
+            ])
 
         return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST,
+            SessionReportSerializer(report, context={'request': request}).data,
+            status=status.HTTP_200_OK,
         )
-
 
 class SessionReportReviewView(APIView):
     permission_classes = [IsAuthenticated]
@@ -305,6 +300,15 @@ class SessionReportReviewView(APIView):
             serializer.save(
                 reviewed_by=request.user
             )
+
+            if report.status == SessionReport.Status.REJECTED:
+                report.start_new_late_cycle()
+                report.save(
+                    update_fields=[
+                        'late_reference_at',
+                        'updated_at',
+                    ]
+                )
 
             return Response(
                 serializer.data,

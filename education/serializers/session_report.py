@@ -19,7 +19,9 @@ class SessionReportSerializer(serializers.ModelSerializer):
             'teacher',
             'created_at',
             'updated_at',
-            'is_late'
+            'teacher_edited_at',
+            'total_late_hours',
+            'is_late',
         ]
         read_only_fields = [
             'id',
@@ -28,7 +30,9 @@ class SessionReportSerializer(serializers.ModelSerializer):
             'rejection_reason',
             'created_at',
             'updated_at',
-            'is_late'
+            'teacher_edited_at',
+            'total_late_hours',
+            'is_late',
         ]
 
     def validate(self, attrs):

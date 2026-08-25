@@ -1,4 +1,3 @@
-import math
 from datetime import datetime, time
 from decimal import Decimal
 
@@ -33,33 +32,21 @@ def get_session_datetime(session):
 
 def get_late_penalty(report):
     """
-    Returns the penalty percentage for a late report.
+    Returns the total late penalty accumulated
+    across all report cycles.
 
-    Example:
-        1 hour late   -> 1%
-        1:20 late     -> 2%
-        5 hours late  -> 5%
-        120 hours     -> 100% (maximum)
+    Every started hour of delay causes a 1% penalty.
+    The maximum penalty is 100%.
     """
+    penalty = (
+        Decimal(report.total_late_hours)
+        * LATE_PENALTY_PER_HOUR
+    )
 
-    if not report.is_late:
-        return Decimal(0)
-
-    session_datetime = get_session_datetime(report.session)
-    updated_at = report.updated_at
-
-    if timezone.is_naive(updated_at):
-        updated_at = timezone.make_aware(
-            updated_at,
-            timezone.get_current_timezone(),
-        )
-
-    delay = updated_at - session_datetime
-    delay_seconds = delay.total_seconds()
-    delay_hours = math.ceil(delay_seconds / 3600)
-    penalty = Decimal(delay_hours) * LATE_PENALTY_PER_HOUR
-
-    return min(penalty, MAX_LATE_PENALTY)
+    return min(
+        penalty,
+        MAX_LATE_PENALTY,
+    )
 
 
 def get_session_base_wage(report, base_rate):
@@ -96,7 +83,7 @@ def calculate_teacher_payroll(teacher, year, month):
         SessionReport.objects
         .filter(
             teacher=teacher,
-            status=SessionReport.status.APPROVED,
+            status=SessionReport.Status.APPROVED,
             session__date__year=year,
             session__date__month=month,
         )
@@ -161,9 +148,9 @@ def calculate_teacher_payroll(teacher, year, month):
         month=month,
         defaults={
             'amount': wage,
-            'session_60': session_60,
-            'session_90': session_90,
-            'session_120': session_120
+            'sessions_60': session_60,
+            'sessions_90': session_90,
+            'sessions_120': session_120
         }
     )
 
