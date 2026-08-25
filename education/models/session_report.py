@@ -1,3 +1,4 @@
+import math
 from datetime import datetime, time, timedelta
 
 from django.conf import settings
@@ -22,6 +23,9 @@ class SessionReport(BaseModel):
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     rejection_reason = models.TextField(blank=True)
     reviewed_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='reviewed_reports')
+    teacher_edited_at = models.DateTimeField(null=True, blank=True)
+    late_reference_at = models.DateTimeField(null=True, blank=True)
+    total_late_hours = models.PositiveIntegerField(default=0)
 
     def clean(self):
         super().clean()
@@ -48,33 +52,99 @@ class SessionReport(BaseModel):
         
     @property
     def is_late(self):
-        if not self.updated_at:
+        if self.status == self.Status.APPROVED:
+            return self.total_late_hours > 0
+
+        if not self.late_reference_at:
             return False
 
-        session_datetime = datetime.combine(
+        reference = self.late_reference_at
+
+        if timezone.is_naive(reference):
+            reference = timezone.make_aware(
+                reference,
+                timezone.get_current_timezone(),
+            )
+
+        deadline = reference + timedelta(hours=48)
+
+        return timezone.now() > deadline
+
+    def __str__(self):
+        return f"Report for {self.session}"
+
+    def get_current_late_hours(self, at=None):
+        if not self.late_reference_at:
+            return 0
+
+        if at is None:
+            at = timezone.now()
+
+        reference = self.late_reference_at
+
+        if timezone.is_naive(reference):
+            reference = timezone.make_aware(
+                reference,
+                timezone.get_current_timezone(),
+            )
+
+        if timezone.is_naive(at):
+            at = timezone.make_aware(
+                at,
+                timezone.get_current_timezone(),
+            )
+
+        deadline = reference + timedelta(hours=48)
+
+        if at <= deadline:
+            return 0
+
+        delay_seconds = (at - deadline).total_seconds()
+
+        return math.ceil(delay_seconds / 3600)
+
+    def mark_teacher_edit(self, edited_at=None):
+        if edited_at is None:
+            edited_at = timezone.now()
+
+        if timezone.is_naive(edited_at):
+            edited_at = timezone.make_aware(
+                edited_at,
+                timezone.get_current_timezone(),
+            )
+
+        current_late_hours = self.get_current_late_hours(
+            at=edited_at
+        )
+
+        self.total_late_hours += current_late_hours
+        self.teacher_edited_at = edited_at
+
+        return current_late_hours
+
+    def initialize_late_cycle(self):
+        if self.late_reference_at:
+            return
+
+        self.late_reference_at = self.session_datetime
+
+    @property
+    def session_datetime(self):
+        value = datetime.combine(
             self.session.date,
             time.min,
         )
 
-        session_datetime = timezone.make_aware(
-            session_datetime,
+        return timezone.make_aware(
+            value,
             timezone.get_current_timezone(),
         )
 
-        updated_at = self.updated_at
+    def start_new_late_cycle(self, rejected_at=None):
+        if rejected_at is None:
+            rejected_at = timezone.now()
 
-        if timezone.is_naive(updated_at):
-            updated_at = timezone.make_aware(
-                updated_at,
-                timezone.get_current_timezone(),
-            )
-
-        deadline = session_datetime + timedelta(hours=48)
-
-        return updated_at > deadline
-
-    def __str__(self):
-        return f"Report for {self.session}"
+        self.late_reference_at = rejected_at
         
 
 
