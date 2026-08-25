@@ -22,7 +22,7 @@ class PayrollRecordModelTests(TestCase):
         payroll = PayrollRecord.objects.create(
             teacher=self.teacher,
             year=2026,
-            month=8,
+            month=9,
             amount=Decimal(127),
             sessions_60=2,
             sessions_90=10,
@@ -31,14 +31,17 @@ class PayrollRecordModelTests(TestCase):
 
         self.assertEqual(payroll.teacher, self.teacher)
         self.assertEqual(payroll.year, 2026)
-        self.assertEqual(payroll.month, 8)
+        self.assertEqual(payroll.month, 9)
         self.assertEqual(payroll.amount, Decimal(127))
+        self.assertEqual(payroll.sessions_60, 2)
+        self.assertEqual(payroll.sessions_90, 10)
+        self.assertEqual(payroll.sessions_120, 1)
 
     def test_payroll_record_has_unique_teacher_and_month(self):
         PayrollRecord.objects.create(
             teacher=self.teacher,
             year=2026,
-            month=8,
+            month=9,
             amount=Decimal(127),
         )
 
@@ -46,7 +49,7 @@ class PayrollRecordModelTests(TestCase):
             PayrollRecord.objects.create(
                 teacher=self.teacher,
                 year=2026,
-                month=8,
+                month=9,
                 amount=Decimal(150),
             )
 
@@ -54,7 +57,7 @@ class PayrollRecordModelTests(TestCase):
         PayrollRecord.objects.create(
             teacher=self.teacher,
             year=2026,
-            month=8,
+            month=9,
             amount=Decimal(127),
         )
 
@@ -79,14 +82,14 @@ class PayrollRecordModelTests(TestCase):
         PayrollRecord.objects.create(
             teacher=self.teacher,
             year=2026,
-            month=8,
+            month=9,
             amount=Decimal(127),
         )
 
         payroll2 = PayrollRecord.objects.create(
             teacher=teacher2,
             year=2026,
-            month=8,
+            month=9,
             amount=Decimal(150),
         )
 
@@ -103,3 +106,16 @@ class PayrollRecordModelTests(TestCase):
         self.assertEqual(payroll.sessions_60, 0)
         self.assertEqual(payroll.sessions_90, 0)
         self.assertEqual(payroll.sessions_120, 0)
+
+    def test_str_returns_expected_value(self):
+        payroll = PayrollRecord.objects.create(
+            teacher=self.teacher,
+            year=2026,
+            month=9,
+            amount=Decimal(127),
+        )
+
+        self.assertEqual(
+            str(payroll),
+            f"{self.teacher} - 2026/9 - 127",
+        )
