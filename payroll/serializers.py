@@ -13,3 +13,22 @@ class TeacherTermRateSerializer(serializers.ModelSerializer):
             'base_rate',
         )
         read_only_fields = ('id',)
+
+
+class PayrollRecordSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PayrollRecord
+        fields = (
+            'id',
+            'teacher',
+            'year',
+            'month',
+            'amount',
+        )
+        read_only_fields = (
+            'id',
+            'teacher',
+            'year',
+            'month',
+            'amount',
+        )
