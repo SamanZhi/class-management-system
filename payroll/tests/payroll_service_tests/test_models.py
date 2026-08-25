@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
 from django.test import TestCase
@@ -12,7 +12,11 @@ from education.models import (
     Term,
 )
 from payroll.models import PayrollRecord, TeacherTermRate
-from payroll.services import calculate_teacher_payroll
+from payroll.services import (
+    calculate_teacher_payroll,
+    get_late_penalty,
+    get_session_base_wage,
+)
 from users.models import User
 
 
@@ -102,6 +106,7 @@ class PayrollServiceTests(TestCase):
         self,
         session,
         status=SessionReport.Status.APPROVED,
+        total_late_hours=0,
     ):
         return SessionReport.objects.create(
             session=session,
@@ -110,13 +115,123 @@ class PayrollServiceTests(TestCase):
             present_count=10,
             absent_count=2,
             status=status,
+            total_late_hours=total_late_hours,
         )
 
-    def set_updated_at(self, report, value):
-        SessionReport.objects.filter(
-            pk=report.pk,
-        ).update(
-            updated_at=value,
+    def test_60_minute_session_has_70_percent_of_base_rate(self):
+        session = self.create_session(
+            self.course_60,
+            1,
+            date(2026, 9, 5),
+        )
+
+        report = self.create_report(session)
+
+        wage = get_session_base_wage(
+            report,
+            Decimal(10),
+        )
+
+        self.assertEqual(wage, Decimal(7))
+
+    def test_90_minute_session_has_full_base_rate(self):
+        session = self.create_session(
+            self.course_90,
+            1,
+            date(2026, 9, 5),
+        )
+
+        report = self.create_report(session)
+
+        wage = get_session_base_wage(
+            report,
+            Decimal(10),
+        )
+
+        self.assertEqual(wage, Decimal(10))
+
+    def test_120_minute_session_has_130_percent_of_base_rate(self):
+        session = self.create_session(
+            self.course_120,
+            1,
+            date(2026, 9, 5),
+        )
+
+        report = self.create_report(session)
+
+        wage = get_session_base_wage(
+            report,
+            Decimal(10),
+        )
+
+        self.assertEqual(wage, Decimal(13))
+
+    def test_report_without_late_hours_has_no_penalty(self):
+        session = self.create_session(
+            self.course_90,
+            1,
+            date(2026, 9, 5),
+        )
+
+        report = self.create_report(
+            session,
+            total_late_hours=0,
+        )
+
+        self.assertEqual(
+            get_late_penalty(report),
+            Decimal(0),
+        )
+
+    def test_one_late_hour_has_one_percent_penalty(self):
+        session = self.create_session(
+            self.course_90,
+            1,
+            date(2026, 9, 5),
+        )
+
+        report = self.create_report(
+            session,
+            total_late_hours=1,
+        )
+
+        self.assertEqual(
+            get_late_penalty(report),
+            Decimal('0.01'),
+        )
+
+    def test_two_late_hours_have_two_percent_penalty(self):
+        session = self.create_session(
+            self.course_90,
+            1,
+            date(2026, 9, 5),
+        )
+
+        report = self.create_report(
+            session,
+            total_late_hours=2,
+        )
+
+        self.assertEqual(
+            get_late_penalty(report),
+            Decimal('0.02'),
+        )
+
+    def test_late_penalty_is_capped_at_100_percent(self):
+        session = self.create_session(
+            self.course_90,
+            1,
+            date(2026, 9, 5),
+        )
+
+        report = self.create_report(
+            session,
+            total_late_hours=150,
+        )
+
+        self.assertEqual(
+            get_late_penalty(report),
+            Decimal('1.0'),
         )
 
     def test_calculates_basic_wage_for_60_90_and_120_sessions(self):
@@ -148,10 +263,6 @@ class PayrollServiceTests(TestCase):
             9,
         )
 
-        # 90 = 10
-        # 60 = 10 * 0.7 = 7
-        # 120 = 10 * 1.3 = 13
-        # Total = 30
         self.assertEqual(
             payroll.amount,
             Decimal(30),
@@ -246,20 +357,16 @@ class PayrollServiceTests(TestCase):
             Decimal(10),
         )
 
-    def test_late_approved_report_is_not_removed_from_payroll(self):
+    def test_late_approved_report_is_included_with_penalty(self):
         session = self.create_session(
             self.course_90,
             1,
             date(2026, 9, 5),
         )
 
-        report = self.create_report(session)
-
-        self.set_updated_at(
-            report,
-            datetime.fromisoformat(
-                '2026-09-07T01:00:00+00:00'
-            ),
+        report = self.create_report(
+            session,
+            total_late_hours=1,
         )
 
         payroll = calculate_teacher_payroll(
@@ -268,10 +375,13 @@ class PayrollServiceTests(TestCase):
             9,
         )
 
-        self.assertTrue(
-            SessionReport.objects.get(
-                pk=report.pk,
-            ).is_late
+        report.refresh_from_db()
+
+        self.assertTrue(report.is_late)
+
+        self.assertEqual(
+            payroll.amount,
+            Decimal('9.90'),
         )
 
         self.assertEqual(
@@ -279,20 +389,16 @@ class PayrollServiceTests(TestCase):
             1,
         )
 
-    def test_one_hour_late_report_gets_one_percent_penalty(self):
+    def test_two_late_hours_get_two_percent_penalty(self):
         session = self.create_session(
             self.course_90,
             1,
             date(2026, 9, 5),
         )
 
-        report = self.create_report(session)
-
-        self.set_updated_at(
-            report,
-            datetime.fromisoformat(
-                '2026-09-05T01:00:00+00:00'
-            ),
+        self.create_report(
+            session,
+            total_late_hours=2,
         )
 
         payroll = calculate_teacher_payroll(
@@ -301,58 +407,45 @@ class PayrollServiceTests(TestCase):
             9,
         )
 
-        # Base wage = 10
-        # 1 hour late = 1% penalty
-        # 10 * 0.99 = 9.90
-        self.assertEqual(
-            payroll.amount,
-            Decimal('9.90'),
-        )
-
-    def test_round_up_late_report_time_to_upper_integer(self):
-        session = self.create_session(
-            self.course_90,
-            1,
-            date(2026, 9, 5),
-        )
-
-        report = self.create_report(session)
-
-        self.set_updated_at(
-            report,
-            datetime.fromisoformat(
-                '2026-09-05T01:20:00+00:00'
-            ),
-        )
-
-        payroll = calculate_teacher_payroll(
-            self.teacher,
-            2026,
-            9,
-        )
-
-        # 1:20 late -> 2 hours
-        # 2% penalty
         # 10 * 0.98 = 9.80
         self.assertEqual(
             payroll.amount,
             Decimal('9.80'),
         )
 
-    def test_late_penalty_is_capped_at_100_percent(self):
+    def test_late_hours_are_accumulated_in_payroll_penalty(self):
         session = self.create_session(
             self.course_90,
             1,
             date(2026, 9, 5),
         )
 
-        report = self.create_report(session)
+        self.create_report(
+            session,
+            total_late_hours=4,
+        )
 
-        self.set_updated_at(
-            report,
-            datetime.fromisoformat(
-                '2026-09-20T00:00:00+00:00'
-            ),
+        payroll = calculate_teacher_payroll(
+            self.teacher,
+            2026,
+            9,
+        )
+
+        self.assertEqual(
+            payroll.amount,
+            Decimal('9.60'),
+        )
+
+    def test_late_penalty_can_reduce_wage_to_zero(self):
+        session = self.create_session(
+            self.course_90,
+            1,
+            date(2026, 9, 5),
+        )
+
+        self.create_report(
+            session,
+            total_late_hours=100,
         )
 
         payroll = calculate_teacher_payroll(
@@ -389,7 +482,7 @@ class PayrollServiceTests(TestCase):
             course_obj=summer_course,
             teacher=self.teacher,
             start_date=date(2027, 6, 1),
-            end_date=date(2027, 7, 31),
+            end_date=date(2027, 8, 31),
         )
 
         TeacherTermRate.objects.create(
@@ -404,13 +497,55 @@ class PayrollServiceTests(TestCase):
             date(2027, 6, 5),
         )
 
-        SessionReport.objects.create(
-            session=session,
+        self.create_report(session)
+
+        payroll = calculate_teacher_payroll(
+            self.teacher,
+            2027,
+            6,
+        )
+
+        self.assertEqual(
+            payroll.amount,
+            Decimal(11),
+        )
+
+    def test_summer_multiplier_is_applied_after_late_penalty(self):
+        summer_term = Term.objects.create(
+            start_date=date(2027, 6, 1),
+            end_date=date(2027, 8, 31),
+            type='summer',
+        )
+
+        summer_course = Course.objects.create(
+            school=self.school,
+            term=summer_term,
+            subject='Summer Python',
+            duration=90,
+        )
+
+        CourseTeacher.objects.create(
+            course_obj=summer_course,
             teacher=self.teacher,
-            summary='Summer report',
-            present_count=10,
-            absent_count=2,
-            status=SessionReport.Status.APPROVED,
+            start_date=date(2027, 6, 1),
+            end_date=date(2027, 8, 31),
+        )
+
+        TeacherTermRate.objects.create(
+            teacher=self.teacher,
+            term=summer_term,
+            base_rate=Decimal(10),
+        )
+
+        session = self.create_session(
+            summer_course,
+            1,
+            date(2027, 6, 5),
+        )
+
+        self.create_report(
+            session,
+            total_late_hours=1,
         )
 
         payroll = calculate_teacher_payroll(
@@ -419,10 +554,9 @@ class PayrollServiceTests(TestCase):
             6,
         )
 
-        # 10 * 1.1 = 11
         self.assertEqual(
             payroll.amount,
-            Decimal(11),
+            Decimal('10.89'),
         )
 
     def test_recalculating_same_month_replaces_previous_payroll(self):

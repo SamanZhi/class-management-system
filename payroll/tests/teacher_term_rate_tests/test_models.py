@@ -13,7 +13,7 @@ class TeacherTermRateModelTests(TestCase):
 
     def setUp(self):
         self.teacher = User.objects.create_user(
-            username='test_teacher',
+            username='teacher A',
             password='pass123',
             role='teacher',
             phone_number='+989123456789',
@@ -99,3 +99,15 @@ class TeacherTermRateModelTests(TestCase):
         )
 
         self.assertEqual(rate2.teacher, teacher2)
+
+    def test_str_returns_expected_value(self):
+        rate = TeacherTermRate.objects.create(
+            teacher=self.teacher,
+            term=self.term,
+            base_rate=Decimal(10),
+        )
+
+        self.assertEqual(
+            str(rate),
+            f"{self.teacher} - {self.term} - 10",
+        )
