@@ -1,11 +1,13 @@
 from datetime import date
 
 from django.test import TestCase
-from django.utils import timezone
 from rest_framework.test import APIRequestFactory
 
 from education.models import Course, CourseTeacher, School, Session, SessionReport, Term
-from education.serializers.session_report import SessionReportReviewSerializer, SessionReportSerializer
+from education.serializers.session_report import (
+    SessionReportReviewSerializer,
+    SessionReportSerializer,
+)
 from users.models import User
 
 
@@ -53,10 +55,10 @@ class SessionReportSerializerTests(TestCase):
         }
 
     def create_report(self, **kwargs):
-        data = dict(
-            session=self.session, teacher=self.teacher,
-            summary='Original summary', present_count=15, absent_count=2,
-        )
+        data = {
+            'session': self.session, 'teacher': self.teacher,
+            'summary': 'Original summary', 'present_count': 15, 'absent_count': 2,
+        }
         data.update(kwargs)
         return SessionReport.objects.create(**data)
 

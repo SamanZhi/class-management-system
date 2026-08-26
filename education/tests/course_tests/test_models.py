@@ -137,7 +137,7 @@ class CourseTeacherModelTests(TestCase):
         assignment = CourseTeacher(
             course_obj= self.course,
             teacher=self.teacher,
-            start_date=date(2026, 9, 10),
+            start_date=date(2026, 10, 10),
             end_date=date(2026, 9, 1)            
         )
 

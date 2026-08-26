@@ -78,7 +78,7 @@ class TermViewTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_create_allowed_for_education_officer(self):
+    def test_create_allowed_for_education_officer_and_with_start_date_first_day_returns_201(self):
         self.client.force_authenticate(self.education_officer)
 
         response = self.client.post(self.list_url, 
@@ -183,6 +183,21 @@ class TermViewTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_create_term_with_start_date_not_first_day_returns_400(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.post(
+            self.list_url,
+            {
+                'start_date': '2027-02-15',
+                'end_date': '2027-04-30',
+                'type': 'regular'
+            }
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('start_date', response.data)
+
     def test_create_invalid_date_range_returns_400(self):
         self.client.force_authenticate(self.education_officer)
 
@@ -203,8 +218,8 @@ class TermViewTest(APITestCase):
         response = self.client.post(
             self.list_url,
             {
-               'start_date': '2026-09-10', 
-                'end_date': '2026-10-30',
+                'start_date': '2026-10-01', 
+                'end_date': '2026-11-30',
                 'type': 'regular' 
             }
         )
