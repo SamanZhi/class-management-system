@@ -213,12 +213,8 @@ class PayrollRecordViewTests(APITestCase):
         )
 
         response = self.client.post(
-            reverse('payroll-calculate-all'),
-            {
-                'year': 2026,
-                'month': 9,
-            },
-            format='json',
+            reverse('payroll-calculate-all')
+            + '?year=2026&month=9'
         )
 
         self.assertEqual(
