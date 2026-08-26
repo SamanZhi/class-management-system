@@ -58,10 +58,33 @@ class TermSerializerTests(TestCase):
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
+    def test_start_date_must_be_first_day_of_month(self):
+        data = {
+            'start_date': '2026-09-15',
+            'end_date': '2026-11-30',
+            'type': 'regular'
+        }
+
+        serializer = TermSerializer(data=data)
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('start_date', serializer.errors)
+
+    def test_start_date_on_first_day_of_month_is_valid(self):
+        data = {
+            'start_date': '2026-09-01',
+            'end_date': '2026-11-30',
+            'type': 'regular'
+        }
+
+        serializer = TermSerializer(data=data)
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
     def test_end_date_must_be_after_start_date(self):
         data = {
-            'start_date': '2026-09-10',
-            'end_date': '2026-09-01',
+            'start_date': '2026-09-01',
+            'end_date': '2026-08-01',
             'type': 'regular'
         }
 
@@ -72,7 +95,7 @@ class TermSerializerTests(TestCase):
 
     def test_invalid_term_type_is_rejected(self):
         data = {
-            'start_date': '2026-09-10',
+            'start_date': '2026-09-01',
             'end_date': '2026-10-30',
             'type': 'winter'
         } 
@@ -86,7 +109,7 @@ class TermSerializerTests(TestCase):
         self.create_term(start_date=date(2026, 7, 1), end_date=date(2026, 9, 30))
 
         data = {
-            'start_date': '2026-07-15',
+            'start_date': '2026-08-01',
             'end_date': '2026-09-15',
             'type': 'regular'
         }

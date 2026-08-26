@@ -26,8 +26,29 @@ class TermModelTest(TestCase):
 
         self.assertEqual(str(term), 'regular - (2026-09-01 to 2026-11-30)')
 
+    def test_start_date_must_be_first_day_of_month(self):
+        term = Term(
+            start_date=date(2026, 9, 15),
+            end_date=date(2026, 11, 30),
+            type='regular'
+        )
+
+        with self.assertRaises(ValidationError) as context:
+            term.full_clean()
+
+        self.assertIn('start_date', context.exception.message_dict)
+
+    def test_start_date_on_first_day_of_month_is_valid(self):
+        term = Term(
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 11, 30),
+            type='regular'
+        )
+
+        term.full_clean()
+
     def test_end_date_must_be_after_start_date(self):
-        term = Term(start_date=date(2026, 11, 20), end_date=date(2026, 10, 10), type='regular')
+        term = Term(start_date=date(2026, 11, 1), end_date=date(2026, 10, 10), type='regular')
 
         with self.assertRaises(ValidationError):
             term.full_clean()
@@ -35,7 +56,7 @@ class TermModelTest(TestCase):
     def test_terms_cannot_overlap(self):
         self.create_term(start_date=date(2026, 9, 1), end_date=date(2026, 11, 30))
 
-        overlapping_term = Term(start_date=date(2026, 9, 10), end_date=date(2026, 10, 31), type='regular')
+        overlapping_term = Term(start_date=date(2026, 10, 1), end_date=date(2026, 10, 31), type='regular')
 
         with self.assertRaises(ValidationError):
             overlapping_term.full_clean()
@@ -49,9 +70,9 @@ class TermModelTest(TestCase):
             overlapping_term.full_clean()
 
     def test_non_overlapping_terms_are_valid(self):
-        self.create_term(start_date=date(2026, 9, 1), end_date=date(2026, 10, 10))
+        self.create_term(start_date=date(2026, 9, 1), end_date=date(2026, 10, 31))
 
-        second_term = Term(start_date=date(2026, 10, 15), end_date=date(2026, 12, 25), type='regular')
+        second_term = Term(start_date=date(2026, 11, 1), end_date=date(2026, 12, 25), type='regular')
 
         second_term.full_clean()
 
