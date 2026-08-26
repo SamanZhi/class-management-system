@@ -83,3 +83,39 @@ class PayrollCalculateAllView(APIView):
             serializer.data,
             status=status.HTTP_200_OK,
         )
+
+
+class PayrollMonthlyListView(APIView):
+    permission_classes = [
+        IsAuthenticated,
+        IsFinanceOfficer,
+    ]
+
+    def get(self, request):
+        year, month, error_response = get_year_month(
+            request
+        )
+
+        if error_response:
+            return error_response
+
+        payrolls = PayrollRecord.objects.filter(
+            year=year,
+            month=month,
+        ). select_related(
+            'teacher',
+        ).order_by(
+            'teacher__username',
+        )
+
+        serializer = PayrollRecordSerializer(
+            payrolls,
+            many=True,
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    
