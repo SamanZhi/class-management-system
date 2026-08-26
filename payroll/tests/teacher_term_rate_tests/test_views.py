@@ -21,7 +21,7 @@ class TeacherTermRateViewTests(APITestCase):
             username='test_teacher',
             password='pass123',
             role='teacher',
-            phone_number='=+989123456789',
+            phone_number='+989123456789',
             emergency_number='+989876543210'
         )
 

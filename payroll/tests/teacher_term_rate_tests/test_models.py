@@ -82,7 +82,7 @@ class TeacherTermRateModelTests(TestCase):
             username='new_teacher',
             password='pass456',
             role='teacher',
-            phone_number='=+981234567890',
+            phone_number='+981234567890',
             emergency_number='+989123456789'
         )
 

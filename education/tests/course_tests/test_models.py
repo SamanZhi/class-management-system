@@ -29,7 +29,7 @@ class CourseModelTests(TestCase):
             username='test_teacher',
             password='pass123',
             role='teacher',
-            phone_number='=+989123456789',
+            phone_number='+989123456789',
             emergency_number='+989876543210'
         )
 
@@ -108,7 +108,7 @@ class CourseTeacherModelTests(TestCase):
             username='test_teacher',
             password='pass123',
             role='teacher',
-            phone_number='=+989123456789',
+            phone_number='+989123456789',
             emergency_number='+989876543210'
         )
 
@@ -116,7 +116,7 @@ class CourseTeacherModelTests(TestCase):
             username='new_teacher',
             password='pass456',
             role='teacher',
-            phone_number='=+981234567890',
+            phone_number='+981234567890',
             emergency_number='+989123456789'
         )
 

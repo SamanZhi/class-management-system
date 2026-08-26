@@ -1,6 +1,7 @@
+from datetime import date
+
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils import timezone
 
 from core.models import BaseModel, SoftDeleteModel
 
@@ -46,10 +47,10 @@ class CourseTeacher(BaseModel, SoftDeleteModel):
             course_obj=self.course_obj
         ).exclude(pk=self.pk)
 
-        this_end = self.end_date or timezone.max.date()
+        this_end = self.end_date or date.max
 
         for assignment in overlapping:
-            other_end = assignment.end_date or timezone.max.date()
+            other_end = assignment.end_date or date.max
 
             if self.start_date <= other_end and assignment.start_date <= this_end:
                 raise ValidationError("این بازه زمانی با مربی دیگری هم پوشانی دارد.")

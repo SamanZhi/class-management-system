@@ -3,7 +3,7 @@ from datetime import date
 from django.test import TestCase
 
 from education.models import Course, CourseTeacher, School, Term
-from education.serializers import (
+from education.serializers.course import (
     CourseDetailSerializer,
     CourseSerializer,
     CourseTeacherSerializer,
@@ -47,7 +47,7 @@ class CourseSerializerTests(TestCase):
 
     def test_valid_course_data(self):
         data = {
-            'school': self.school,
+            'school': self.school.id,
             'term': self.term.id,
             'subject': 'Django',
             'duration': 120
@@ -121,7 +121,7 @@ class CourseTeacherSerializerTests(TestCase):
             username='test_teacher',
             password='pass123',
             role='teacher',
-            phone_number='=+989123456789',
+            phone_number='+989123456789',
             emergency_number='+989876543210'
         )
 
@@ -130,7 +130,7 @@ class CourseTeacherSerializerTests(TestCase):
             username='new_teacher',
             password='pass456',
             role='teacher',
-            phone_number='=+981234567890',
+            phone_number='+981234567890',
             emergency_number='+989123456789'
         )
 
@@ -148,7 +148,7 @@ class CourseTeacherSerializerTests(TestCase):
             set(data.keys()), 
             {
                 'id',
-                'course_obg=j',
+                'course_obj',
                 'teacher',
                 'start_date',
                 'end_date',
@@ -277,7 +277,7 @@ class CourseDetailsSerializerTests(TestCase):
         self.school = School.objects.create(name='School A', address='Address A')
 
         self.term = Term.objects.create(
-            start_date=date(2026, 9, 1),
+            start_date=date(2026, 8, 1),
             end_date=date(2026, 11, 30),
             type='regular'
         )
@@ -295,37 +295,32 @@ class CourseDetailsSerializerTests(TestCase):
             role='teacher',
             first_name='Saman',
             last_name='Zhiani',
-            phone_number='=+989361208772',
+            phone_number='+989361208772',
             emergency_number='+989876543210'
+        )
+
+        self.assignment = CourseTeacher.objects.create(
+            course_obj=self.course,
+            teacher=self.teacher,
+            start_date=date(2026, 9, 1),
+            end_date=None
         )
 
     def test_current_teacher_is_returned(self):
         CourseTeacher.objects.create(
             course_obj= self.course,
             teacher=self.teacher,
-            start_date=date(2026, 9, 1),
+            start_date=date(2026, 8, 1),
             end_date=date(2026, 10, 25)  
         )
 
         data = CourseDetailSerializer(self.course).data
 
         self.assertIsNotNone(data['current_teacher'])
-        self.assertEqual(
-            data['current_teacher']['id'],
-            self.teacher.id
-        )
-        self.assertEqual(
-            data['current_teacher']['first_name'], 
-            'Saman'
-        )
-        self.assertEqual(
-            data['current_teacher']['last_name'], 
-            'Zhiani'
-        )
-        self.assertEqual(
-            data['current_teacher']['phone_number'], 
-            '+989361208772'
-        )
+        self.assertEqual(data['current_teacher']['id'], self.teacher.id)
+        self.assertEqual(data['current_teacher']['first_name'], 'Saman')
+        self.assertEqual(data['current_teacher']['last_name'], 'Zhiani')
+        self.assertEqual(data['current_teacher']['phone_number'], '+989361208772')
 
     def current_teacher_is_none_when_no_active_assignment(self):
         CourseTeacher.objects.create(
@@ -337,4 +332,4 @@ class CourseDetailsSerializerTests(TestCase):
 
         data = CourseDetailSerializer(self.course).data
 
-        self.assertIsNone(data['current_teacher'])
+        self.assertIsNone(data['teacher'])
