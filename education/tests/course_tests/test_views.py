@@ -23,7 +23,7 @@ class CourseViewTests(APITestCase):
             username='test_teacher',
             password='pass123',
             role='teacher',
-            phone_number='=+989123456789',
+            phone_number='+989123456789',
             emergency_number='+989876543210'
         )
 
@@ -32,7 +32,7 @@ class CourseViewTests(APITestCase):
             username='new_teacher',
             password='pass456',
             role='teacher',
-            phone_number='=+981234567890',
+            phone_number='+981234567890',
             emergency_number='+989123456789'
         )
 
@@ -234,7 +234,7 @@ class CourseViewTests(APITestCase):
 
         detail_url2 = reverse(
             'course-detail',
-            args=[self.new_course.id]
+            args=[self.course2.id]
         )
 
         response =self.client.get(detail_url2)
@@ -354,7 +354,7 @@ class CourseTeacherViewTests(APITestCase):
             username='test_teacher',
             password='pass123',
             role='teacher',
-            phone_number='=+989123456789',
+            phone_number='+989123456789',
             emergency_number='+989876543210'
         )
         
@@ -362,7 +362,7 @@ class CourseTeacherViewTests(APITestCase):
             username='new_teacher',
             password='pass456',
             role='teacher',
-            phone_number='=+981234567890',
+            phone_number='+981234567890',
             emergency_number='+989123456789'
         )
 
@@ -389,7 +389,7 @@ class CourseTeacherViewTests(APITestCase):
         )
 
         CourseTeacher.objects.create(
-            course_obj= self.course2,
+            course_obj= self.course,
             teacher=self.teacher2,
             start_date=date(2026, 9, 15),
             end_date=date(2026, 11, 10)
@@ -445,8 +445,8 @@ class CourseTeacherViewTests(APITestCase):
             {
                 'course_obj': self.course.id,
                 'teacher': self.teacher2.id,
-                'start_date': '2026-09-01',
-                'end_date': '2026-11-01',
+                'start_date': '2026-11-15',
+                'end_date': '2026-11-30',
             }
         )
 
@@ -491,7 +491,7 @@ class CourseTeacherViewTests(APITestCase):
 
         response = self.client.patch(
             self.detail_url,
-            {'end_date': '2026-09-15'}
+            {'end_date': '2026-09-14'}
         )
 
         self.assertEqual(

@@ -56,7 +56,7 @@ class TermModelTest(TestCase):
         second_term.full_clean()
 
     def test_summer_term_can_be_created(self):
-        term = self.create_term(start_date=date(2027, 6, 1), end_date=date(2027, 6, 30), type='summer')
+        term = self.create_term(start_date=date(2027, 6, 1), end_date=date(2027, 6, 30), term_type='summer')
 
         self.assertEqual(term.type, 'summer')
 

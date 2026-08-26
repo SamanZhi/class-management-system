@@ -19,8 +19,8 @@ class SchoolViewTestCase(APITestCase):
                             username='fin_officer A', password='pass789', role='finance_officer',
         )
         self.school = School.objects.create(name='School A')
-        self.list_url = reverse('schools:school-list-create')
-        self.detail_url = reverse('schools:school-detail', args=[self.school.id])
+        self.list_url = reverse('school-list')
+        self.detail_url = reverse('school-detail', args=[self.school.id])
 
     def test_list_requires_authentication(self):
         response = self.client.get(self.list_url)

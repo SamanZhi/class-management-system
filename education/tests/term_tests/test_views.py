@@ -14,7 +14,7 @@ class TermViewTest(APITestCase):
             username='test_teacher',
             password='pass123',
             role='teacher',
-            phone_number='=+989123456789',
+            phone_number='+989123456789',
             emergency_number='+989876543210'
         )
 
@@ -34,11 +34,10 @@ class TermViewTest(APITestCase):
             start_date=date(2026, 9, 1),
             end_date=date(2026, 11, 30),
             type='regular'
-        ),
-
-        self.list_url = reverse('term_list')
-        self.detail_url= reverse('term_detail', args=[self.term.id]
         )
+
+        self.list_url = reverse('term-list')
+        self.detail_url= reverse('term-detail', args=[self.term.id])
 
     def test_list_requires_authentication(self):
         response = self.client.get(self.list_url)
@@ -84,8 +83,8 @@ class TermViewTest(APITestCase):
 
         response = self.client.post(self.list_url, 
             {
-                'start_date': '2026-09-01', 
-                'end_date': '2026-11-30',
+                'start_date': '2027-02-01', 
+                'end_date': '2027-03-30',
                 'type': 'regular'
             }
         )
@@ -94,8 +93,8 @@ class TermViewTest(APITestCase):
 
         self.assertTrue(
             Term.objects.filter(
-                start_date=date(2026, 9, 1), 
-                end_date=date(2026, 11, 30)
+                start_date=date(2027, 2, 1), 
+                end_date=date(2027, 3, 30)
             ).exists()
         )
 

@@ -3,11 +3,15 @@ from datetime import date
 from django.test import TestCase
 
 from education.models import Term
-from education.serializers import TermSerializer
+from education.serializers.term import TermSerializer
 
 
 class TermSerializerTests(TestCase):
-    def create_term(self, start_date=date(2026, 9, 1), end_date=date(2026, 11, 30), term_type='regular'):
+    def create_term(
+            self,
+            start_date=date(2026, 9, 1), 
+            end_date=date(2026, 11, 30), 
+            term_type='regular'):
         return Term.objects.create(start_date=start_date, end_date=end_date, type=term_type)
 
     def test_serialized_fields(self):
@@ -69,7 +73,7 @@ class TermSerializerTests(TestCase):
     def test_invalid_term_type_is_rejected(self):
         data = {
             'start_date': '2026-09-10',
-            'end_date': '2026-10-31',
+            'end_date': '2026-10-30',
             'type': 'winter'
         } 
 
@@ -79,11 +83,11 @@ class TermSerializerTests(TestCase):
         self.assertIn('type', serializer.errors)
 
     def test_overlapping_term_is_rejected(self):
-        self.create_term(start_date=date(2026, 7, 1), end_date=(2026, 7, 31))
+        self.create_term(start_date=date(2026, 7, 1), end_date=date(2026, 9, 30))
 
         data = {
-            'start_date': '2026-09-15',
-            'end_date': '2026-09-31',
+            'start_date': '2026-07-15',
+            'end_date': '2026-09-15',
             'type': 'regular'
         }
 
@@ -97,7 +101,7 @@ class TermSerializerTests(TestCase):
 
         data = {
                 'start_date': '2026-09-01',
-                'end_date': '2026-10-31',
+                'end_date': '2026-10-30',
                 'type': 'regular'
             }
 

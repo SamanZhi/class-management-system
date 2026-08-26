@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from education.models import School
-from education.serializers import SchoolSerializer
+from education.serializers.school import SchoolSerializer
 
 
 class SchoolSerializerTests(TestCase):
