@@ -40,6 +40,8 @@ def get_year_month(request):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+    return year, month, None
+
 
 class PayrollCalculateAllView(APIView):
     permission_classes = [
