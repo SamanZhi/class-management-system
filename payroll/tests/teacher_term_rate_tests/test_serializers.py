@@ -51,10 +51,16 @@ class TeacherTermRateSerializerTests(TestCase):
         )
 
     def test_creates_teacher_term_rate(self):
+        second_term = Term.objects.create(
+            start_date=date(2027, 2, 1),
+            end_date=date(2027, 4, 30),
+            type='regular',
+        )
+
         serializer = TeacherTermRateSerializer(
             data={
                 'teacher': self.teacher.id,
-                'term': self.term.id,
+                'term': second_term.id,
                 'base_rate': '15',
             }
         )
@@ -64,8 +70,24 @@ class TeacherTermRateSerializerTests(TestCase):
         rate = serializer.save()
 
         self.assertEqual(rate.teacher, self.teacher)
-        self.assertEqual(rate.term, self.term)
+        self.assertEqual(rate.term, second_term)
         self.assertEqual(rate.base_rate, Decimal(15))
+
+    def test_rejects_duplicate_teacher_term(self):
+        serializer = TeacherTermRateSerializer(
+            data={
+                'teacher': self.teacher.id,
+                'term': self.term.id,
+                'base_rate': '15',
+            }
+        )
+
+        self.assertFalse(serializer.is_valid())
+
+        self.assertIn(
+            'non_field_errors',
+            serializer.errors,
+        )
 
     def test_id_is_read_only(self):
         serializer = TeacherTermRateSerializer(
