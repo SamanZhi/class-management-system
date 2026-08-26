@@ -1,5 +1,3 @@
-from django.utils.dateparse import parse_date
-
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -118,4 +116,27 @@ class PayrollMonthlyListView(APIView):
             status=status.HTTP_200_OK,
         )
 
-    
+
+class TeacherPayrollHistoryView(APIView):
+    permission_classes = [
+        IsAuthenticated,
+        IsTeacher,
+    ]
+
+    def get(self, request):
+        payrolls = PayrollRecord.objects.filter(
+            teacher=request.user,
+        ).order_by(
+            '-year',
+            '-month',
+        )
+
+        serializer = PayrollRecordSerializer(
+            payrolls,
+            many=True,
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
