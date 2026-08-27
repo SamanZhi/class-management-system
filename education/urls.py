@@ -12,6 +12,7 @@ from education.views.session_report import (
     SessionReportDetailView,
     SessionReportListCreateView,
     SessionReportReviewView,
+    TeacherMonthlyReportSummaryView,
 )
 from education.views.term import TermDetailView, TermListCreateView
 
@@ -27,6 +28,7 @@ urlpatterns = [
     path('sessions/', SessionListCreateView.as_view(), name='session-list'),
     path('sessions/<int:pk>/', SessionDetailView.as_view(), name='session-detail'),
     path('session-reports/', SessionReportListCreateView.as_view(), name='session-report-list'),
+    path('session-reports/monthly-summary/', TeacherMonthlyReportSummaryView.as_view(), name='teacher-monthly-report-summary'),
     path('session-reports/<int:pk>/', SessionReportDetailView.as_view(), name='session-report-detail'),
     path('session-reports/<int:pk>/review/', SessionReportReviewView.as_view(), name='session-report-review')
 ]
