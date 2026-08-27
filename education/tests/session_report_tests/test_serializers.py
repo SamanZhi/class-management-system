@@ -226,12 +226,32 @@ class SessionReportReviewSerializerTests(TestCase):
         serializer = SessionReportReviewSerializer()
         self.assertTrue(serializer.fields['reviewed_by'].read_only)
 
-    def test_rejected_report_cannot_be_reviewed_again(self):
+    def test_rejected_report_can_be_directly_approved(self):
         self.report.status = SessionReport.Status.REJECTED
-        self.report.rejection_reason = 'Fix it.'
+        self.report.rejection_reason = 'Needs correction.'
         self.report.save()
-        serializer = self.serializer({'status': SessionReport.Status.APPROVED})
-        self.assertFalse(serializer.is_valid())
+
+        serializer = SessionReportReviewSerializer(
+            self.report,
+            data={
+                'status': SessionReport.Status.APPROVED,
+            },
+            partial=True,
+        )
+
+        self.assertTrue(
+            serializer.is_valid(),
+            serializer.errors,
+        )
+
+        serializer.save()
+
+        self.report.refresh_from_db()
+
+        self.assertEqual(
+            self.report.status,
+            SessionReport.Status.APPROVED,
+        )
 
     def test_approved_report_cannot_be_reviewed_again(self):
         self.report.status = SessionReport.Status.APPROVED
