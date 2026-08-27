@@ -1,3 +1,4 @@
+from django.db.models import Count, Q
 from django.utils.dateparse import parse_date
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -8,6 +9,7 @@ from education.models import SessionReport
 from education.serializers.session_report import (
     SessionReportReviewSerializer,
     SessionReportSerializer,
+    TeacherMonthlyReportSummarySerializer,
 )
 
 
@@ -242,6 +244,74 @@ class SessionReportDetailView(APIView):
 
         return Response(
             SessionReportSerializer(report, context={'request': request}).data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class TeacherMonthlyReportSummaryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != 'teacher':
+            return Response(
+                {
+                    'detail': (
+                        'Only teachers can access monthly report summary.'
+                    )
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            year = int(request.query_params.get('year'))
+            month = int(request.query_params.get('month'))
+        except (TypeError, ValueError):
+            return Response(
+                {
+                    'detail': 'Year and month are required and must be integers.'
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if month < 1 or month > 12:
+            return Response(
+                {'detail': 'Month must be between 1 and 12.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        reports = SessionReport.objects.filter(
+            teacher=request.user,
+            session__date__year=year,
+            session__date__month=month,
+        )
+
+        summary = reports.aggregate(
+            approved=Count(
+                'id',
+                filter=Q(status=SessionReport.Status.APPROVED),
+            ),
+            rejected=Count(
+                'id',
+                filter=Q(status=SessionReport.Status.REJECTED),
+            ),
+            pending=Count(
+                'id',
+                filter=Q(status=SessionReport.Status.PENDING),
+            ),
+        )
+
+        data = {
+            'year': year,
+            'month': month,
+            'approved': summary['approved'],
+            'rejected': summary['rejected'],
+            'pending': summary['pending'],
+        }
+
+        serializer = TeacherMonthlyReportSummarySerializer(data)
+
+        return Response(
+            serializer.data,
             status=status.HTTP_200_OK,
         )
 

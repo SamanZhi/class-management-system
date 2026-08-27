@@ -127,3 +127,11 @@ class SessionReportReviewSerializer(serializers.ModelSerializer):
             )
 
         return attrs
+
+
+class TeacherMonthlyReportSummarySerializer(serializers.Serializer):
+    year = serializers.IntegerField()
+    month = serializers.IntegerField()
+    approved = serializers.IntegerField()
+    rejected = serializers.IntegerField()
+    pending = serializers.IntegerField()

@@ -152,6 +152,53 @@ class SessionReportViewTests(APITestCase):
         response = self.client.get(reverse('session-report-detail', kwargs={'pk': report.pk}))
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_teacher_can_see_monthly_report_summary(self):
+        session2 = Session.objects.create(
+            course_obj=self.course, session_number=2, date=date(2026, 8, 6)
+        )
+        session3 = Session.objects.create(
+            course_obj=self.course, session_number=3, date=date(2026, 8, 7)
+        )
+
+        approved_report = self.create_report(  # noqa: F841
+            session=self.session, status=SessionReport.Status.APPROVED
+        )
+        rejected_report = self.create_report(  # noqa: F841
+            session=session2, status=SessionReport.Status.REJECTED,
+            rejection_reason='Fix it.'
+        )
+        pending_report = self.create_report(session=session3)  # noqa: F841
+
+        self.client.force_authenticate(user=self.teacher)
+
+        response = self.client.get(
+            reverse('teacher-monthly-report-summary'),
+            {
+                'year': self.session.date.year,
+                'month': self.session.date.month,
+            }
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['approved'], 1)
+        self.assertEqual(response.data['rejected'], 1)
+        self.assertEqual(response.data['pending'], 1)
+
+    def test_non_teacher_cannot_access_monthly_report_summary(self):
+        self.client.force_authenticate(
+            user=self.education_officer
+        )
+
+        response = self.client.get(
+            reverse('teacher-monthly-report-summary'),
+            {
+                'year': 2026,
+                'month': 9,
+            }
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_teacher_can_edit_pending_report(self):
         report = self.create_report()
         self.client.force_authenticate(user=self.teacher)
