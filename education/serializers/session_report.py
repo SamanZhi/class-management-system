@@ -118,9 +118,9 @@ class SessionReportReviewSerializer(serializers.ModelSerializer):
                 'status': 'Invalid review status.'
             })
 
-        if self.instance and self.instance.status in (
-            SessionReport.Status.APPROVED,
-            SessionReport.Status.REJECTED,
+        if (
+            self.instance
+            and self.instance.status == SessionReport.Status.APPROVED
         ):
             raise serializers.ValidationError(
                 'This report has already been reviewed.'
