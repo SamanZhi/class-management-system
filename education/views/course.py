@@ -20,11 +20,14 @@ class CourseListCreateView(APIView):
 
         school_id = request.query_params.get('school')
         term_id = request.query_params.get('term')
+        teacher_id = request.query_params.get('teacher')
 
         if school_id:
             courses = courses.filter(school_id=school_id)
         if term_id:
             courses = courses.filter(term_id=term_id)
+        if teacher_id:
+            courses = courses.filter(teacher_assignments__teacher=teacher_id).distinct()
 
         if request.user.role == 'teacher':
             courses = courses.filter(

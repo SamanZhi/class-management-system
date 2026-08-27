@@ -51,7 +51,7 @@ class CourseViewTests(APITestCase):
             duration=90
         )
 
-        self.teacher_assignment = CourseTeacher.objects.create(
+        self.teacher_assignments = CourseTeacher.objects.create(
             course_obj= self.course,
             teacher=self.teacher,
             start_date=date(2026, 9, 1),
@@ -158,6 +158,74 @@ class CourseViewTests(APITestCase):
         )
 
         self.assertEqual(len(response.data), 2)
+
+    def test_filter_courses_by_teacher(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.get(
+            self.list_url,
+            {'teacher': self.teacher.id}
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+        returned_ids = {
+            item['id']
+            for item in response.data
+        }
+
+        self.assertIn(self.course.id, returned_ids)
+        self.assertNotIn(self.course2.id, returned_ids)
+
+    def test_filter_courses_by_school_term_and_teacher(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.get(
+            self.list_url,
+            {
+                'school': self.school.id,
+                'term': self.term.id,
+                'teacher': self.teacher.id,
+            }
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+        returned_ids = {
+            item['id']
+            for item in response.data
+        }
+
+        self.assertEqual(
+            returned_ids,
+            {self.course.id}
+        )
+
+    def test_teacher_cannot_use_teacher_filter_to_see_other_courses(self):
+        self.client.force_authenticate(self.teacher)
+
+        response = self.client.get(
+            self.list_url,
+            {'teacher': self.teacher2.id}
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+        returned_ids = {
+            item['id']
+            for item in response.data
+        }
+
+        self.assertNotIn(self.course2.id, returned_ids)
 
     def test_create_denied_for_teacher(self):
         self.client.force_authenticate(self.teacher)
