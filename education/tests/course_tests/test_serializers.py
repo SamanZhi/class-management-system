@@ -1,6 +1,7 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.test import TestCase
+from django.utils import timezone
 
 from education.models import Course, CourseTeacher, School, Term
 from education.serializers.course import (
@@ -299,37 +300,87 @@ class CourseDetailsSerializerTests(TestCase):
             emergency_number='+989876543210'
         )
 
-        self.assignment = CourseTeacher.objects.create(
+    def test_current_teacher_is_returned(self):
+        today = timezone.now().date()
+
+        CourseTeacher.objects.create(
             course_obj=self.course,
             teacher=self.teacher,
-            start_date=date(2026, 9, 1),
-            end_date=None
-        )
-
-    def test_current_teacher_is_returned(self):
-        CourseTeacher.objects.create(
-            course_obj= self.course,
-            teacher=self.teacher,
-            start_date=date(2026, 8, 1),
-            end_date=date(2026, 10, 25)  
+            start_date=today - timedelta(days=10),
+            end_date=today + timedelta(days=10)
         )
 
         data = CourseDetailSerializer(self.course).data
 
         self.assertIsNotNone(data['current_teacher'])
         self.assertEqual(data['current_teacher']['id'], self.teacher.id)
-        self.assertEqual(data['current_teacher']['first_name'], 'Saman')
-        self.assertEqual(data['current_teacher']['last_name'], 'Zhiani')
-        self.assertEqual(data['current_teacher']['phone_number'], '+989361208772')
+        self.assertEqual(
+            data['current_teacher']['first_name'],
+            'Saman'
+        )
+        self.assertEqual(
+            data['current_teacher']['last_name'],
+            'Zhiani'
+        )
+        self.assertEqual(
+            data['current_teacher']['phone_number'],
+            '+989361208772'
+        )
 
-    def current_teacher_is_none_when_no_active_assignment(self):
+    def test_current_teacher_is_none_when_no_active_assignment(self):
+        data = CourseDetailSerializer(self.course).data
+
+        self.assertIsNone(data['current_teacher'])
+
+    def test_only_current_teacher_is_returned(self):
+        today = timezone.now().date()
+
+        previous_teacher = User.objects.create_user(
+            username='previous_teacher',
+            password='pass123',
+            role='teacher',
+            first_name='Previous',
+            last_name='Teacher',
+            phone_number='+981111111111',
+            emergency_number='+982222222222'
+        )
+
         CourseTeacher.objects.create(
-            course_obj= self.course,
+            course_obj=self.course,
+            teacher=previous_teacher,
+            start_date=today - timedelta(days=30),
+            end_date=today - timedelta(days=5)
+        )
+
+        CourseTeacher.objects.create(
+            course_obj=self.course,
             teacher=self.teacher,
-            start_date=date(2026, 9, 1),
-            end_date=date(2026, 10, 25)  
+            start_date=today - timedelta(days=4),
+            end_date=None
         )
 
         data = CourseDetailSerializer(self.course).data
 
-        self.assertIsNone(data['teacher'])
+        self.assertEqual(
+            data['current_teacher']['id'],
+            self.teacher.id
+        )
+
+        self.assertNotEqual(
+            data['current_teacher']['id'],
+            previous_teacher.id
+        )
+
+    def test_future_teacher_is_not_returned_as_current_teacher(self):
+        today = timezone.now().date()
+
+        CourseTeacher.objects.create(
+            course_obj=self.course,
+            teacher=self.teacher,
+            start_date=today + timedelta(days=10),
+            end_date=None
+        )
+
+        data = CourseDetailSerializer(self.course).data
+
+        self.assertIsNone(data['current_teacher'])

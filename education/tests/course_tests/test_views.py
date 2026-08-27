@@ -13,8 +13,8 @@ class CourseViewTests(APITestCase):
         self.school = School.objects.create(name='School A', address='Address A')
 
         self.term = Term.objects.create(
-            start_date=date(2026, 9, 1),
-            end_date=date(2026, 11, 30),
+            start_date=date(2026, 8, 1),
+            end_date=date(2026, 10, 30),
             type='regular'
         )
 
@@ -54,8 +54,8 @@ class CourseViewTests(APITestCase):
         self.teacher_assignments = CourseTeacher.objects.create(
             course_obj= self.course,
             teacher=self.teacher,
-            start_date=date(2026, 9, 1),
-            end_date=date(2026, 10, 30)
+            start_date=date(2026, 8, 1),
+            end_date=date(2026, 10, 1)
         )
 
         self.course2 = Course.objects.create(
@@ -68,8 +68,8 @@ class CourseViewTests(APITestCase):
         CourseTeacher.objects.create(
             course_obj= self.course2,
             teacher=self.teacher2,
-            start_date=date(2026, 9, 15),
-            end_date=date(2026, 11, 10)
+            start_date=date(2026, 8, 15),
+            end_date=date(2026, 10, 30)
         )
 
         self.list_url = reverse('course-list')
@@ -405,6 +405,27 @@ class CourseViewTests(APITestCase):
         self.assertEqual(
             response.status_code,
             status.HTTP_403_FORBIDDEN
+        )
+
+    def test_course_detail_includes_current_teacher(self):
+        self.client.force_authenticate(self.education_officer)
+
+        response = self.client.get(self.detail_url)
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK
+        )
+
+        self.assertIn('current_teacher', response.data)
+
+        self.assertIsNotNone(
+            response.data['current_teacher']
+        )
+
+        self.assertEqual(
+            response.data['current_teacher']['id'],
+            self.teacher.id
         )
 
 
