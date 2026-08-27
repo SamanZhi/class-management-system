@@ -88,4 +88,5 @@ class CourseDetailSerializer(serializers.ModelSerializer):
         ).first()
         if assignment:
             return CurrentTeacherSerializer(assignment.teacher).data
+        
         return None
